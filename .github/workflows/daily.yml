@@ -2,8 +2,8 @@ name: Daily Threads Horoscope Post
 
 on:
   schedule:
-    # 每天 UTC 時間 23:30 執行 = 台灣時間 (UTC+8) 每天早上 07:30 觸發
-    - cron: '30 23 * * *'
+    # 每天 UTC 時間 16:06 執行 = 台灣時間 (UTC+8) 每天凌晨 00:06 觸發
+    - cron: '6 16 * * *'
   workflow_dispatch: # 允許在 GitHub 頁面上手動點擊按鈕測試
 
 jobs:
