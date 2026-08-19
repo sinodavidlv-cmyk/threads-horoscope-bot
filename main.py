@@ -1,0 +1,89 @@
+import os
+import requests
+from google import genai
+
+# 1. 呼叫 Gemini AI 生成每日 12 星座運勢
+def generate_horoscope_content():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("❌ 找不到 GEMINI_API_KEY 環境變數")
+        
+    client = genai.Client(api_key=api_key)
+    
+    prompt = """
+    你是一位風格活潑、精通星象的語錄型專家。
+    請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座短評總整理」。
+    要求：
+    1. 開頭要有一句超吸睛的標題與今日日期。
+    2. 使用簡短的文字與討喜的 Emoji 排版。
+    3. 條列出當日 lucky 星座 Top 3 以及一句話溫馨提醒。
+    4. 字數控制在 350 字內，排版適合手機閱讀。
+    """
+    
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=prompt
+    )
+    return response.text
+
+# 2. 自動刷新 Threads Long-Lived Token (延展 60 天效期)
+def refresh_threads_token():
+    token = os.environ.get("THREADS_ACCESS_TOKEN")
+    url = "https://graph.threads.net/refresh_access_token"
+    params = {
+        "grant_type": "th_refresh_token",
+        "access_token": token
+    }
+    try:
+        res = requests.get(url, params=params).json()
+        if "access_token" in res:
+            print("🔄 成功刷新 Threads 長效 Token！")
+            return res["access_token"]
+    except Exception as e:
+        print(f"⚠️ Token 刷新提示: {e}")
+    return token
+
+# 3. 發布貼文至 Threads API
+def post_to_threads(text_content):
+    user_id = os.environ.get("THREADS_USER_ID")
+    access_token = refresh_threads_token()
+    
+    # 步驟 A: 建立貼文 Media Container
+    create_url = f"https://graph.threads.net/v1.0/{user_id}/threads"
+    payload = {
+        "media_type": "TEXT",
+        "text": text_content,
+        "access_token": access_token
+    }
+    
+    res = requests.post(create_url, data=payload).json()
+    creation_id = res.get("id")
+    
+    if not creation_id:
+        print("❌ 建立 Threads 貼文容器失敗:", res)
+        return False
+        
+    print(f"✅ 貼文容器建立成功! Container ID: {creation_id}")
+    
+    # 步驟 B: 發布容器
+    publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
+    pub_payload = {
+        "creation_id": creation_id,
+        "access_token": access_token
+    }
+    
+    pub_res = requests.post(publish_url, data=pub_payload).json()
+    published_id = pub_res.get("id")
+    
+    if published_id:
+        print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
+        return True
+    else:
+        print("❌ 發布貼文失敗:", pub_res)
+        return False
+
+if __name__ == "__main__":
+    print("🔮 開始生成今日星座貼文...")
+    content = generate_horoscope_content()
+    print("📝 生成貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
+    post_to_threads(content)
