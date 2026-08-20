@@ -3,19 +3,25 @@ import requests
 from datetime import datetime, timezone, timedelta  # 1. 引入時間套件
 from google import genai
 
-# 1. 呼叫 Gemini AI 生成每日 12 星座運勢
-def generate_horoscope_content():
+# 1. 通用 AI 生成函式（新增此函式來處理所有不同主題）
+def generate_ai_content(prompt):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("❌ 找不到 GEMINI_API_KEY 環境變數")
         
     client = genai.Client(api_key=api_key)
     
-    # 2. 取得台灣目前日期 (UTC+8)
+    response = client.models.generate_content(
+        model="gemini-3.6-flash",
+        contents=prompt
+    )
+    return response.text
+
+# 原本的第 1 篇生成函式（可保留）
+def generate_horoscope_content():
     tw_time = datetime.now(timezone.utc) + timedelta(hours=8)
-    today_str = tw_time.strftime("%m/%d")  # 格式如：08/20
+    today_str = tw_time.strftime("%m/%d")
     
-    # 3. 使用 f-string 動態插入日期，並要求增加字數與細節
     prompt = f"""
     你是一位風格活潑、精通星象的語錄型專家。
     請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座運勢短評與幸運指南」。
@@ -29,12 +35,7 @@ def generate_horoscope_content():
        - 一句話溫馨提醒與給予滿滿能量的結尾。
     4. 【字數重點】：請將總字數充實控制在「420 字至 480 字之間」（切勿超過 Threads 500 字限制，但也避免內容過短）。
     """
-    
-    response = client.models.generate_content(
-        model="gemini-3.6-flash",  # 建議使用穩定版本模型名稱
-        contents=prompt
-    )
-    return response.text
+    return generate_ai_content(prompt)
 
 # 2. 自動刷新 Threads Long-Lived Token (延展 60 天效期)
 def refresh_threads_token():
@@ -95,17 +96,22 @@ def post_to_threads(text_content):
 if __name__ == "__main__":
     import time
 
-    # 1. 在這裡設定 4 篇貼文內容（可以是固定文字，或是呼叫 AI 產生）
+    # 取得台灣目前日期 (UTC+8)
+    tw_time = datetime.now(timezone.utc) + timedelta(hours=8)
+    today_str = tw_time.strftime("%m/%d")
+
+    # 1. 將 4 篇提示詞全部透過 generate_ai_content() 丟給 AI 生成
     posts = [
         generate_horoscope_content(),  # 第 1 篇：AI 星座運勢
-        """根據今日的星座運勢去搭配出今日最佳的配對運勢: 與其他星座的配對情況，請分成在愛情、友情和職場關係方面這三大類.最後結尾加一句根據今日運勢專屬的祝福語. 答案嚴格限制在500字以內.開頭請用"格式月/日的今日日期"今日十二星座最佳配對:""",       # 第 2 篇
-        """今日十二生肖運勢與建議. 然後加一個今日十二生肖運勢的簡短100個字元相關的生肖心理測試, 心理測試要有問有答且有趣,最後結尾加一句根據今日運勢專屬的祝福語. 上述請依序排列並將答案嚴格限制在500字以內.開頭請用"格式月/日的今日日期"今日十二生肖運勢:""",       # 第 3 篇
-        """給我今日十二生肖三合與六合的關係，請分為人際互動,婚姻匹配與事業這三大類.最後結尾加一句根據今日運勢專屬的祝福語.上述請依序排列並將答案嚴格限制在500字以內.並將最終的答案融入以下元素:
-1. 善用 Emoji 標籤與換行，拒絕長篇大論；首圖(Emoji)要做得美觀且資訊清楚。
-2.場景敘事：用最近時事的具體生活情境來描述。
-3.創造互動： 在文末點名（例：@身邊最衰的朋友）或使用投票功能，誘發留言與轉發。
-4.情緒共鳴： 加入幽默或吃瓜的個人風格.
-5. 開頭請用"格式月/日的今日日期"今日十二生肖最佳配對:"""        # 第 4 篇
+        
+        # 第 2 篇：最佳配對
+        generate_ai_content(f"""根據今日的星座運勢去搭配出今日最佳的配對運勢: 與其他星座的配對情況，請分成在愛情、友情和職場關係方面這三大類.最後結尾加一句根據今日運勢專屬的祝福語. 答案嚴格限制在500字以內.開頭請用"{today_str} 今日十二星座最佳配對:" """),
+        
+        # 第 3 篇：生肖運勢與心理測試
+        generate_ai_content(f"""今日十二生肖運勢與建議. 然後加一個今日十二生肖運勢的簡短100個字元相關的生肖心理測試, 心理測試要有問有答且有趣,最後結尾加一句根據今日運勢專屬的祝福語. 上述請依序排列並將答案嚴格限制在500字以內.開頭請用"{today_str} 今日十二生肖運勢:" """),
+        
+        # 第 4 篇：生肖三合六合
+        generate_ai_content(f"""給我今日十二生肖三合與六合的關係，請分為人際互動,婚姻匹配與事業這三大類.最後結尾加一句根據今日運勢專屬的祝福語.上述請依序排列並將答案嚴格限制在500字以內.並將最終的答案融入以下元素: 1. 善用 Emoji 標籤與換行，拒絕長篇大論；首圖(Emoji)要做得美觀且資訊清楚。 2.場景敘事：用最近時事的具體生活情境來描述。 3.創造互動： 在文末點名（例：@身邊最衰的朋友）或使用投票功能，誘發留言與轉發。 4.情緒共鳴： 加入幽默或吃瓜的個人風格. 5. 開頭請用"{today_str} 今日十二生肖最佳配對:" """)
     ]
 
     total_posts = len(posts)
