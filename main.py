@@ -1,5 +1,6 @@
 import os
 import requests
+from datetime import datetime, timezone, timedelta  # 1. 引入時間套件
 from google import genai
 
 # 1. 呼叫 Gemini AI 生成每日 12 星座運勢
@@ -10,18 +11,27 @@ def generate_horoscope_content():
         
     client = genai.Client(api_key=api_key)
     
-    prompt = """
+    # 2. 取得台灣目前日期 (UTC+8)
+    tw_time = datetime.now(timezone.utc) + timedelta(hours=8)
+    today_str = tw_time.strftime("%m/%d")  # 格式如：08/20
+    
+    # 3. 使用 f-string 動態插入日期，並要求增加字數與細節
+    prompt = f"""
     你是一位風格活潑、精通星象的語錄型專家。
-    請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座短評總整理」。
+    請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座運勢短評與幸運指南」。
+
     要求：
-    1. 全文開頭請用格式 "月/日"的今日日期今日十二星座運勢幸運色和數字:
-    2. 使用簡短的文字與討喜的 Emoji 排版。
-    3. 條列出當日 lucky 星座 Top 3 以及一句話溫馨提醒。
-    4. 字數控制在 350 字內，排版適合手機閱讀。
+    1. 全文開頭請精確使用格式：✨【{today_str} 今日十二星座運勢幸運色與數字】✨
+    2. 使用討喜的 Emoji 與適合手機閱讀的排版。
+    3. 內容包含：
+       - 當日幸運星 Top 3（含理由）。
+       - 12 星座簡短點評（含運勢焦點、幸運色與幸運數字）。
+       - 一句話溫馨提醒與給予滿滿能量的結尾。
+    4. 【字數重點】：請將總字數充實控制在「420 字至 480 字之間」（切勿超過 Threads 500 字限制，但也避免內容過短）。
     """
     
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-flash",  # 建議使用穩定版本模型名稱
         contents=prompt
     )
     return response.text
