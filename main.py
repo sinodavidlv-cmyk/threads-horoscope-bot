@@ -93,7 +93,7 @@ def post_to_threads(text_content):
         print("❌ 發布貼文失敗:", pub_res)
         return False
             
-  if __name__ == "__main__":
+if __name__ == "__main__":
     import time
 
     # 1. 先取得台灣目前日期 (UTC+8)
