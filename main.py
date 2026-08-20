@@ -31,7 +31,7 @@ def generate_horoscope_content():
     """
     
     response = client.models.generate_content(
-        model="gemini-2.5-flash",  # 建議使用穩定版本模型名稱
+        model="gemini-3.6-flash",  # 建議使用穩定版本模型名稱
         contents=prompt
     )
     return response.text
