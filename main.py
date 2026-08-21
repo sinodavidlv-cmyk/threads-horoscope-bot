@@ -32,64 +32,90 @@ def generate_horoscope_content():
     tw_time = datetime.now(timezone.utc) + timedelta(hours=8)
     today_str = tw_time.strftime("%m/%d")
     
-    prompt = f"""請幫我生成今日十二星座運勢，請包含以下元素：
-1. 開頭請用 "{today_str} 今日十二星座運勢:"
-2. 包含每一個星座的今日運勢簡短分析與幸運指數/建議。
-3. 文末附上一句專屬祝福語。
-4. 全文嚴格限制在 400 字以內，善用 Emoji 標籤與換行。"""
+    prompt = f"""請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座運勢短評與幸運指南」。
+要求：
+1. 全文開頭請精確使用格式：✨【{today_str} 今日十二星座運勢幸運色與數字】✨
+2. 使用討喜的 Emoji 與適合手機閱讀的排版。
+3. 內容包含：
+   - 當日幸運星 Top 3（含理由）。
+   - 12 星座簡短點評（含運勢焦點、幸運色與幸運數字）。
+   - 一句話溫馨提醒與給予滿滿能量的結尾。
+4. 全文字數精確控制在 420 字至 480 字之間。"""
     
     return generate_ai_content(prompt)
+
+def refresh_threads_token():
+    """自動刷新 Threads Long-Lived Token (延展 60 天效期)"""
+    token = THREADS_ACCESS_TOKEN
+    url = "https://graph.threads.net/refresh_access_token"
+    params = {"grant_type": "th_refresh_token", "access_token": token}
+    try:
+        res = requests.get(url, params=params).json()
+        if "access_token" in res:
+            print("🔄 成功刷新 Threads 長效 Token！")
+            return res["access_token"]
+    except Exception as e:
+        print(f"⚠️ Token 刷新提示: {e}")
+    return token
 
 def post_to_threads(text_content):
     """發布貼文至 Threads API"""
     if not THREADS_USER_ID or not THREADS_ACCESS_TOKEN:
-        print("❌ 缺少 Threads 認證資訊，無法發布。")
-        return
+        print("❌ 缺少 THREADS_USER_ID 或 THREADS_ACCESS_TOKEN 環境變數，無法發布。")
+        return False
+
+    access_token = refresh_threads_token()
 
     # Step 1: 建立 Media Container
     creation_url = f"https://graph.threads.net/v1.0/{THREADS_USER_ID}/threads"
     payload = {
         "media_type": "TEXT",
         "text": text_content,
-        "access_token": THREADS_ACCESS_TOKEN
+        "access_token": access_token
     }
     
     try:
-        res = requests.post(creation_url, data=payload)
-        res.raise_for_status()
-        creation_id = res.json().get("id")
-        print(f"✅ Container 建立成功，ID: {creation_id}")
+        res = requests.post(creation_url, data=payload).json()
+        creation_id = res.get("id")
+        if not creation_id:
+            print("❌ 建立 Threads 貼文容器失敗:", res)
+            return False
+        print(f"✅ 貼文容器建立成功! Container ID: {creation_id}")
     except Exception as e:
         print(f"❌ 建立 Container 失敗: {e}")
-        return
+        return False
 
     # 等待 container 準備完成
     time.sleep(5)
 
     # Step 2: 發布 Container
     publish_url = f"https://graph.threads.net/v1.0/{THREADS_USER_ID}/threads_publish"
-    publish_payload = {
+    pub_payload = {
         "creation_id": creation_id,
-        "access_token": THREADS_ACCESS_TOKEN
+        "access_token": access_token
     }
     
     try:
-        pub_res = requests.post(publish_url, data=publish_payload)
-        pub_res.raise_for_status()
-        print(f"🎉 貼文發布成功！ID: {pub_res.json().get('id')}")
+        pub_res = requests.post(publish_url, data=pub_payload).json()
+        published_id = pub_res.get("id")
+        if published_id:
+            print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
+            return True
+        else:
+            print("❌ 發布貼文失敗:", pub_res)
+            return False
     except Exception as e:
         print(f"❌ 發布貼文失敗: {e}")
+        return False
 
 if __name__ == "__main__":
-    # 1. 取得台灣目前日期 (UTC+8)
     tw_time = datetime.now(timezone.utc) + timedelta(hours=8)
     today_str = tw_time.strftime("%m/%d")
 
-    # 2. 定義 4 個發布任務
     tasks = [
         {
             "name": "星座運勢",
-            "prompt": None  # 代表使用 generate_horoscope_content()
+            "prompt": None
         },
         {
             "name": "星座配對",
@@ -105,13 +131,11 @@ if __name__ == "__main__":
         }
     ]
 
-    # 3. 計算總數並執行發布迴圈
     total_tasks = len(tasks)
 
     for index, task in enumerate(tasks, start=1):
         print(f"\n🔮 [{index}/{total_tasks}] 正在處理：{task['name']}...")
         
-        # (A) 即時生成 AI 內容
         if task["prompt"] is None:
             content = generate_horoscope_content()
         else:
@@ -121,16 +145,13 @@ if __name__ == "__main__":
             print(f"⚠️ {task['name']} 內容生成失敗，跳過此任務。")
             continue
 
-        # (B) 安全字數裁切（防止超過 500 字元限制）
         if len(content) > 480:
             content = content[:475] + "..."
             
         print("📝 貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
         
-        # (C) 呼叫 Threads 發布 API
         post_to_threads(content)
         
-        # (D) 冷卻等待機制（最後一篇無需等待）
         if index < total_tasks:
             print("⏳ 等待 15 秒後準備處理下一篇...")
             time.sleep(15)
