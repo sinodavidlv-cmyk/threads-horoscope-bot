@@ -8,28 +8,28 @@ def generate_horoscope_content():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("❌ 找不到 GEMINI_API_KEY 環境變數")
-        
-    client = genai.Client(api_key=api_key)
-    
-    # 1. 取得台灣時間 (UTC+8) 的今日日期
-    tz_taiwan = timezone(timedelta(hours=8))
-    today_str = datetime.now(tz_taiwan).strftime("%Y年%m月%d日")
 
-    # 2. 將今日日期帶入 Prompt (注意 prompt 前面要有一個小寫 f)
+    client = genai.Client(api_key=api_key)
+
+    # 1. 先計算台灣時間 (UTC+8) 的當日日期
+    tz_taiwan = timezone(timedelta(hours=8))
+    today_str = datetime.now(tz_taiwan).strftime("%m/%d")
+
+    # 2. 將 prompt 改為 f-string (注意 prompt = f""" 的小寫 f)
+    # 並直接把 {today_str} 帶入 Prompt 內
     prompt = f"""
 你是一位風格活潑、精通星象的語錄型專家。
 請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座短評總整理」。
 
 要求：
-1. 今日十二星座與其星象的運勢,幸運顏色和幸運數字 
-2. 開頭要有一句超吸睛的標題，並且標題開頭請用格式 "月/日"的今日日期今日十二星座運勢幸運色和數字:。
-3. 使用簡短的文字與討喜的 Emoji 排版。
-4. 結尾適合當日運勢的一句話溫馨提醒。
-5. 全部字數，包括符號、特殊字元都必須嚴格控制在 450 字內，排版適合手機閱讀。
+1. 開頭要有一句超吸睛的標題，並且標題開頭必須包含當日日期【{today_str}】。
+2. 使用簡短的文字與討喜的 Emoji 排版。
+3. 結尾適合當日運勢的一句話溫馨提醒。
+4. 全部字數，包括符號、特殊字元都必須嚴格控制在 450 字內，排版適合手機閱讀。
 """
-    
+
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-flash",
         contents=prompt
     )
     return response.text
