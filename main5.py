@@ -19,7 +19,7 @@ def generate_horoscope_content():
     # 2. 將 prompt 改為 f-string (注意 prompt = f""" 的小寫 f)
     # 並直接把 {today_str} 帶入 Prompt 內
     prompt = f"""
-你是一位風格活潑、精通星象的語錄型專家。
+你是一位風格謹慎、精通國際事件新聞的語錄型專家。
 請為 Threads 社群平台撰寫一則繁體中文「今日新聞短評總整理」。
 
 【合規與內容安全防線（極重要，必須嚴格遵守）】
