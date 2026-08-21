@@ -29,7 +29,7 @@ def generate_horoscope_content():
 """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3-flash-preview",
         contents=prompt
     )
     return response.text
