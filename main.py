@@ -73,7 +73,8 @@ def post_to_threads(text_content):
         return False
         
     print(f"✅ 貼文容器建立成功! Container ID: {creation_id}")
-    
+    print("⏳ 等待 Meta 後端同步資料 (10秒)...")
+    time.sleep(10)
     # 步驟 B: 發布容器
     publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
     pub_payload = {
