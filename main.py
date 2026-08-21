@@ -1,6 +1,5 @@
 import os
 import requests
-from datetime import datetime, timezone, timedelta  # 1. 引入時間套件
 from google import genai
 
 # 1. 呼叫 Gemini AI 生成每日 12 星座運勢
@@ -11,26 +10,18 @@ def generate_horoscope_content():
         
     client = genai.Client(api_key=api_key)
     
-    # 2. 取得台灣目前日期 (UTC+8)
-    tw_time = datetime.now(timezone.utc) + timedelta(hours=8)
-    today_str = tw_time.strftime("%m/%d")  # 格式如：08/20
-    
-    # 3. 使用 f-string 動態插入日期，並要求增加字數與細節
-    prompt = f"""
+    prompt = """
     你是一位風格活潑、精通星象的語錄型專家。
-    請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座運勢短評與幸運指南」。
-
+    請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座短評總整理」。
     要求：
-    1. 全文開頭請精確使用格式：✨【{today_str} 今日十二星座運勢幸運色與數字】✨
-    2. 使用討喜的 Emoji 與適合手機閱讀的排版。
-    3. 內容包含：
-       - 12 星座簡短點評（含運勢焦點、幸運色與幸運數字）。
-       - 一句話溫馨提醒與給予滿滿能量的結尾。
-    4. 【字數重點】：請將總字數充實控制在「420 字至 450 字之間」（切勿超過 Threads 480 字限制，但也避免內容過短）。
+    1. 開頭要有一句超吸睛的標題與今日日期。
+    2. 使用簡短的文字與討喜的 Emoji 排版。
+    3. 條列出當日 lucky 星座 Top 3 以及一句話溫馨提醒。
+    4. 字數控制在 350 字內，排版適合手機閱讀。
     """
     
     response = client.models.generate_content(
-        model="gemini-3.6-flash",  # 建議使用穩定版本模型名稱
+        model="gemini-3-flash-preview",
         contents=prompt
     )
     return response.text
@@ -56,9 +47,7 @@ def refresh_threads_token():
 def post_to_threads(text_content):
     user_id = os.environ.get("THREADS_USER_ID")
     access_token = refresh_threads_token()
-    # 強制限制字數在 490 字以內，避免 Threads API 500 字上限報錯
-    if len(text_content) > 490:
-        text_content = text_content[:487] + "..."
+    
     # 步驟 A: 建立貼文 Media Container
     create_url = f"https://graph.threads.net/v1.0/{user_id}/threads"
     payload = {
@@ -67,32 +56,32 @@ def post_to_threads(text_content):
         "access_token": access_token
     }
     
-    res_json = requests.post(create_url, data=payload).json()
-creation_id = res_json.get("id")
-
-if "error" in res_json or not creation_id:
-    print(f"❌ 建立 Threads 貼文容器失敗: {res_json}")
-    raise Exception(f"Threads API 發文失敗: {res_json.get('error', {}).get('message')}")
+    res = requests.post(create_url, data=payload).json()
+    creation_id = res.get("id")
+    
+    if not creation_id:
+        print("❌ 建立 Threads 貼文容器失敗:", res)
+        return False
         
     print(f"✅ 貼文容器建立成功! Container ID: {creation_id}")
     
-   # 步驟 B: 發布容器
-publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
+    # 步驟 B: 發布容器
+    publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
     pub_payload = {
         "creation_id": creation_id,
         "access_token": access_token
     }
-
+    
     pub_res = requests.post(publish_url, data=pub_payload).json()
     published_id = pub_res.get("id")
-
+    
     if published_id:
         print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
         return True
     else:
         print("❌ 發布貼文失敗:", pub_res)
-        raise Exception(f"Threads 貼文發布失敗: {pub_res}")
-        
+        return False
+
 if __name__ == "__main__":
     print("🔮 開始生成今日星座貼文...")
     content = generate_horoscope_content()
