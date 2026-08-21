@@ -76,23 +76,23 @@ if "error" in res_json or not creation_id:
         
     print(f"✅ 貼文容器建立成功! Container ID: {creation_id}")
     
-    # 步驟 B: 發布容器
-    publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
+   # 步驟 B: 發布容器
+publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
     pub_payload = {
         "creation_id": creation_id,
         "access_token": access_token
     }
-    
+
     pub_res = requests.post(publish_url, data=pub_payload).json()
     published_id = pub_res.get("id")
-    
+
     if published_id:
         print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
         return True
     else:
         print("❌ 發布貼文失敗:", pub_res)
-        return False
-
+        raise Exception(f"Threads 貼文發布失敗: {pub_res}")
+        
 if __name__ == "__main__":
     print("🔮 開始生成今日星座貼文...")
     content = generate_horoscope_content()
