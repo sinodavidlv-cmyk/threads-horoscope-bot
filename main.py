@@ -16,8 +16,8 @@ def generate_horoscope_content():
     要求：
     1. 開頭要有一句超吸睛的標題與今日日期。
     2. 使用簡短的文字與討喜的 Emoji 排版。
-    3. 條列出當日 lucky 星座 Top 3 以及一句話溫馨提醒。
-    4. 字數控制在 350 字內，排版適合手機閱讀。
+    3. 結尾適合當日運勢的一句話溫馨提醒。
+    4. 全部字數控制在 450 字內，排版適合手機閱讀。
     """
     
     response = client.models.generate_content(
