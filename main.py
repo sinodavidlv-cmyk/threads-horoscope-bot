@@ -1,6 +1,7 @@
 import os
+import time  
 import requests
-from datetime import datetime, timezone, timedelta   
+from datetime import datetime, timezone, timedelta
 from google import genai
 
 # 1. 呼叫 Gemini AI 生成每日 12 星座運勢
