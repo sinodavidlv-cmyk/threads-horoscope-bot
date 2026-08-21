@@ -24,10 +24,9 @@ def generate_horoscope_content():
     1. 全文開頭請精確使用格式：✨【{today_str} 今日十二星座運勢幸運色與數字】✨
     2. 使用討喜的 Emoji 與適合手機閱讀的排版。
     3. 內容包含：
-       - 當日幸運星 Top 3（含理由）。
        - 12 星座簡短點評（含運勢焦點、幸運色與幸運數字）。
        - 一句話溫馨提醒與給予滿滿能量的結尾。
-    4. 【字數重點】：請將總字數充實控制在「420 字至 480 字之間」（切勿超過 Threads 500 字限制，但也避免內容過短）。
+    4. 【字數重點】：請將總字數充實控制在「420 字至 450 字之間」（切勿超過 Threads 480 字限制，但也避免內容過短）。
     """
     
     response = client.models.generate_content(
@@ -57,7 +56,9 @@ def refresh_threads_token():
 def post_to_threads(text_content):
     user_id = os.environ.get("THREADS_USER_ID")
     access_token = refresh_threads_token()
-    
+    # 強制限制字數在 490 字以內，避免 Threads API 500 字上限報錯
+    if len(text_content) > 490:
+        text_content = text_content[:487] + "..."
     # 步驟 A: 建立貼文 Media Container
     create_url = f"https://graph.threads.net/v1.0/{user_id}/threads"
     payload = {
@@ -66,12 +67,12 @@ def post_to_threads(text_content):
         "access_token": access_token
     }
     
-    res = requests.post(create_url, data=payload).json()
-    creation_id = res.get("id")
-    
-    if not creation_id:
-        print("❌ 建立 Threads 貼文容器失敗:", res)
-        return False
+    res_json = requests.post(create_url, data=payload).json()
+creation_id = res_json.get("id")
+
+if "error" in res_json or not creation_id:
+    print(f"❌ 建立 Threads 貼文容器失敗: {res_json}")
+    raise Exception(f"Threads API 發文失敗: {res_json.get('error', {}).get('message')}")
         
     print(f"✅ 貼文容器建立成功! Container ID: {creation_id}")
     
