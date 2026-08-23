@@ -3,6 +3,7 @@ import time
 import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
+from google.genai.errors import ServerError
 
 # 1. 呼叫 Gemini AI 生成每日 12 新聞
 def generate_horoscope_content():
@@ -35,11 +36,18 @@ def generate_horoscope_content():
 5. 全部字數（含標點符號、Emoji、特殊字元）必須嚴格控制在 450 字以內。
 """
 
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=prompt
-    )
-    return response.text
+for attempt in range(1, 4):
+        try:
+            response = client.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents=prompt
+            )
+            return response.text
+        except ServerError:
+            if attempt == 3:
+                raise
+            print(f"⚠️ 遇到 503 伺服器忙碌，正在進行第 {attempt} 次重試...")
+            time.sleep(5)
 
 # 2. 自動刷新 Threads Long-Lived Token (延展 60 天效期)
 def refresh_threads_token():
