@@ -2,7 +2,7 @@ name: Threads Post 5 Automation
 
 on:
   schedule:
-    - cron: '0 23 * * 0-4'  # 相當於台灣時間 (UTC+8) 的週一至週五早上 07:00
+    - cron: '0 15 * * 0-4'  # 相當於台灣時間 (UTC+8) 的週一至週五早上 07:00
   workflow_dispatch:
 
 jobs:
