@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from google import genai
 from google.genai.errors import ServerError
 
-# 1. 呼叫 Gemini AI 生成每日 12 新聞
+# 1. 呼叫 Gemini AI 生成每日新聞
 def generate_horoscope_content():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
