@@ -1,7 +1,6 @@
 import os
 import time  
 import requests
-import random #新增隨機時間測試
 from datetime import datetime, timezone, timedelta
 from google import genai
 
@@ -102,10 +101,6 @@ def post_to_threads(text_content):
         return False
 
 if __name__ == "__main__":
-    delay_seconds = random.randint(0, 7200)  #隨機的程式碼1-3
-    print(f"⏳ 隨機等待 {delay_seconds // 60} 分鐘後開始...") #隨機的程式碼2-3
-    time.sleep(delay_seconds) #隨機的程式碼3-3
-
     print("🔮 開始生成今日星座貼文...")
     content = generate_horoscope_content()
     print("📝 生成貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
