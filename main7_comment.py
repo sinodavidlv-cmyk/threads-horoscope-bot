@@ -66,7 +66,7 @@ def generate_horoscope_content():
                 contents=prompt
             )
             res_reply = client.models.generate_content(
-                model="gemini-3-flash-preview",
+                model="gemini-2.5-flash",
                 contents=reply_prompt
             )
             
