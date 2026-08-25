@@ -2,7 +2,7 @@ name: Threads Post 4 Automation
 
 on:
   schedule:
-    - cron: '27 16 * * 0-4'  # 相當於台灣時間 (UTC+8) 的每天 00:27
+    - cron: '45 16 * * 0-4'  # 相當於台灣時間 (UTC+8) 的每天 00:45
   workflow_dispatch:
 
 jobs:
