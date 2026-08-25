@@ -3,9 +3,8 @@ import time
 import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
-from google.genai.errors import ServerError
 
-# 1. 呼叫 Gemini AI 生成每日新聞
+# 1. 呼叫 Gemini AI 生成每日 12 生肖配對運勢
 def generate_horoscope_content():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -20,36 +19,48 @@ def generate_horoscope_content():
     # 2. 將 prompt 改為 f-string (注意 prompt = f""" 的小寫 f)
     # 並直接把 {today_str} 帶入 Prompt 內
     prompt = f"""
-你是一位風格謹慎、精通國際事件新聞的語錄型專家。
-請為 Threads 社群平台撰寫一則繁體中文「今日新聞短評總整理」。
+你是一位風格活潑、精通星象的語錄型專家。
+請為 Threads 社群平台撰寫一則繁體中文「今日 12 生肖配對短評總整理」。
 
-【合規與內容安全防線（極重要，必須嚴格遵守）】
-1. 客觀中立：絕不包含歧視（性別、種族、宗教、地域等）、仇恨言論、恐攻與暴力宣揚、無根據的污衊或個人攻擊。
-2. 事實至上：僅引述具備時間、地點、人物、事件的主流權威媒體事實，嚴禁無中生有、捏造內容或轉述未經證實的謠言（內容不實）。
-3. 政治與敏感議題去情緒化：涉及政治、國際衝突或社會事件時，僅客觀陳述「發生了什麼事」，不使用煽動性、極端或帶有強烈立場的用語。
-
-【貼文要求】
-1. 總結今天一大早的國際與台灣頭條新聞重點（須涵蓋主要事件、人物、地點和時間）。
-2. 開頭要有一句超吸睛的標題，格式必須為："{today_str}今日國際與台灣新聞焦點: "。
-3. 使用簡短的文字與討喜的 Emoji 排版，方便手機快速閱讀。
-4. 結尾加上適合今日情境的一句話溫馨提醒。
-5. 全部字數（含標點符號、Emoji、特殊字元）必須嚴格控制在 450 字以內。
+要求：
+1. 今日十二生肖三合與六合的關係，請分為人際互動,婚姻匹配與事業這三大類。
+2. 開頭要有一句超吸睛的標題，並且標題開頭請用格式 "{today_str}今日十二生肖最佳配對: "。
+3. 使用簡短的文字與討喜的 Emoji 排版。
+4. 結尾適合當日運勢的一句話溫馨提醒。
+5. 全部字數，包括符號、特殊字元都必須嚴格控制在 450 字內，排版適合手機閱讀。
 """
 
-    for attempt in range(1, 4):
-            try:
-                response = client.models.generate_content(
-                    model="gemini-3.6-flash",
-                    contents=prompt
-                )
-                return response.text
-            except ServerError:
-                if attempt == 3:
-                    raise
-                print(f"⚠️ 遇到 503 伺服器忙碌，正在進行第 {attempt} 次重試...")
-                time.sleep(5)
+    # 自回留言 Prompt
+    reply_prompt = f"""
+你是一位講話犀利、喜歡吐槽的 Threads 網友。
+請針對今天的生肖配對運勢，寫一則短小精悍（50字以內）的自回留言，用來吸引讀者留言互動。
+要求：
+1. 語氣幽默、吐槽或帶有輕微爭議點（例如：吐槽某個生肖配對今天的運勢）。
+2. 強烈引導讀者 Tag 朋友或留言（例如：「@你身邊生肖配對是羊的朋友」、「覺得準的留言1」）。
+3. 不要寫任何標題，直接輸出留言文字即可。
+"""
 
-# 2. 自動刷新 Threads Long-Lived Token (延展 60 天效期)
+    for attempt in range(3):
+        try:
+            res_main = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=prompt
+            )
+            res_reply = client.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents=reply_prompt
+            )
+            
+            main_text = res_main.text.replace('\n\n', '\n').strip()
+            reply_text = res_reply.text.strip()
+            
+            return main_text, reply_text
+        except Exception as e:
+            if attempt == 2:
+                raise e
+            time.sleep(3)
+
+# 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
     token = os.environ.get("THREADS_ACCESS_TOKEN")
     url = "https://graph.threads.net/refresh_access_token"
@@ -66,12 +77,12 @@ def refresh_threads_token():
         print(f"⚠️ Token 刷新提示: {e}")
     return token
 
-# 3. 發布貼文至 Threads API
-def post_to_threads(text_content):
+# 3. 發布貼文與自動自回至 Threads API
+def post_to_threads(text_content, reply_content):
     user_id = os.environ.get("THREADS_USER_ID")
     access_token = refresh_threads_token()
     
-    # 步驟 A: 建立貼文 Media Container
+    # 建立主貼文容器
     create_url = f"https://graph.threads.net/v1.0/{user_id}/threads"
     payload = {
         "media_type": "TEXT",
@@ -86,10 +97,11 @@ def post_to_threads(text_content):
         print("❌ 建立 Threads 貼文容器失敗:", res)
         return False
         
-    print(f"✅ 貼文容器建立成功! Container ID: {creation_id}")
+    print(f"✅ 主貼文容器建立成功! Container ID: {creation_id}")
     print("⏳ 等待 Meta 後端同步資料 (10秒)...")
     time.sleep(10)
-    # 步驟 B: 發布容器
+
+    # 發布主貼文
     publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
     pub_payload = {
         "creation_id": creation_id,
@@ -99,15 +111,39 @@ def post_to_threads(text_content):
     pub_res = requests.post(publish_url, data=pub_payload).json()
     published_id = pub_res.get("id")
     
-    if published_id:
-        print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
-        return True
-    else:
-        print("❌ 發布貼文失敗:", pub_res)
+    if not published_id:
+        print("❌ 發布主貼文失敗:", pub_res)
         return False
 
+    print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
+    
+    # 自動發布第一條留言
+    print("💬 開始自動發布第一樓留言...")
+    time.sleep(5)
+    
+    reply_container_payload = {
+        "media_type": "TEXT",
+        "text": reply_content,
+        "reply_to_id": published_id,
+        "access_token": access_token
+    }
+    
+    reply_res = requests.post(create_url, data=reply_container_payload).json()
+    reply_creation_id = reply_res.get("id")
+    
+    if reply_creation_id:
+        time.sleep(5)
+        pub_reply_res = requests.post(publish_url, data={"creation_id": reply_creation_id, "access_token": access_token}).json()
+        if pub_reply_res.get("id"):
+            print(f"🔥 成功自動在第一樓留言！Reply ID: {pub_reply_res.get('id')}")
+        else:
+            print("⚠️ 留言發布失敗:", pub_reply_res)
+            
+    return True
+
 if __name__ == "__main__":
-    print("🔮 開始生成今日星座貼文...")
-    content = generate_horoscope_content()
+    print("🔮 [測試版本] 開始生成今日星座貼文與熱門留言...")
+    content, reply_comment = generate_horoscope_content()
     print("📝 生成貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
-    post_to_threads(content)
+    print(f"💬 自回留言預覽：{reply_comment}")
+    post_to_threads(content, reply_comment)
