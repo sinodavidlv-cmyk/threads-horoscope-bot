@@ -1,4 +1,4 @@
-name: Daily Threads Horoscope Post
+name: Threads Post Automation
 
 on:
   schedule:
