@@ -1,4 +1,4 @@
-name: Threads Post Automation 1
+name: Threads Post 1 Automation
 
 on:
   schedule:
