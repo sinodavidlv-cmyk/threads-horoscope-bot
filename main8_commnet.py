@@ -4,7 +4,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
 
-# 1. 呼叫 Gemini AI 生成每日 12 星座運勢與熱門留言
+# 1. 呼叫 Gemini AI 生成每日 12 生肖運勢
 def generate_horoscope_content():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -12,20 +12,23 @@ def generate_horoscope_content():
 
     client = genai.Client(api_key=api_key)
 
+    # 1. 先計算台灣時間 (UTC+8) 的當日日期
     tz_taiwan = timezone(timedelta(hours=8))
     today_str = datetime.now(tz_taiwan).strftime("%m/%d")
 
-    # 主貼文 Prompt（100% 保留你原本的所有要求與格式）
+    # 2. 將 prompt 改為 f-string (注意 prompt = f""" 的小寫 f)
+    # 並直接把 {today_str} 帶入 Prompt 內
     prompt = f"""
-你是一位風格活潑、精通星象的語錄型專家。
-請為 Threads 社群平台撰寫一則繁體中文「今日 12 星座短評總整理」。
+你是一位風格活潑、精通中西星象的語錄型專家。
+請為 Threads 社群平台撰寫一則繁體中文「今日 12 生肖運勢短評總整理」。
 
 要求：
-1. 今日十二星座與其星象的運勢,幸運顏色和幸運數字。
-2. 開頭要有一句超吸睛的標題，並且標題開頭請用格式 "{today_str}今日12星座運勢,幸運色和數字: "。
-3. 使用簡短精簡的文字與討喜的 Emoji 排版（每個星座評語不超過 15 個字）。
-4. 結尾適合當日運勢的一句話溫馨提醒。
-5. 全部字數，包括符號、特殊字元都必須嚴格控制在 400 字內，排版適合手機閱讀。
+1. 今日十二生肖運勢與今日建議。
+2. 簡短100個字元以內相關的今日生肖心理測試, 心理測試要有問有答且有趣, 每一次的測試內容要有變化。
+3. 開頭要有一句超吸睛的標題，並且標題開頭請用格式 "{today_str}今日十二生肖運勢: "。
+4. 使用簡短的文字與討喜的 Emoji 排版。
+5. 結尾適合當日運勢的一句話溫馨提醒。
+6. 全部字數，包括符號、特殊字元都必須嚴格控制在 450 字內，排版適合手機閱讀。
 """
 
     # 自回留言 Prompt
