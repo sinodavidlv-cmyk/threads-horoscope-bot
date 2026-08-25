@@ -1,4 +1,4 @@
-name: Test Auto Reply Threads Bot
+name: Test Auto Reply Threads Bot 2
 
 on:
   workflow_dispatch: # 讓你在 GitHub 網頁上可以手動點選按鈕執行測試，不會影響定時發文
