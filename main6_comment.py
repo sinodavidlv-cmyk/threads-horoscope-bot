@@ -67,7 +67,7 @@ def refresh_threads_token():
         "access_token": token
     }
     try:
-        res = requests.get(url, params=params).json()
+        res = requests.get(url, params=params, timeout=15).json()
         if "access_token" in res:
             print("🔄 成功刷新 Threads 長效 Token！")
             return res["access_token"]
@@ -88,7 +88,7 @@ def post_to_threads(text_content, reply_content):
         "access_token": access_token
     }
     
-    res = requests.post(create_url, data=payload).json()
+    res = requests.post(create_url, data=payload, timeout=15).json()
     creation_id = res.get("id")
     
     if not creation_id:
@@ -106,7 +106,7 @@ def post_to_threads(text_content, reply_content):
         "access_token": access_token
     }
     
-    pub_res = requests.post(publish_url, data=pub_payload).json()
+    pub_res = requests.post(publish_url, data=pub_payload, timeout=15).json()
     published_id = pub_res.get("id")
     
     if not published_id:
