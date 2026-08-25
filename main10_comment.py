@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from google import genai
 
 # 1. 呼叫 Gemini AI 生成每日新聞
-def generate_horoscope_content():
+def generate_news_content():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("❌ 找不到 GEMINI_API_KEY 環境變數")
@@ -44,7 +44,7 @@ def generate_horoscope_content():
 1. 客觀中立：絕不包含歧視（性別、種族、宗教、地域等）、仇恨言論、恐攻與暴力宣揚、無根據的污衊或個人攻擊。
 2. 事實至上：僅引述具備時間、地點、人物、事件的主流權威媒體事實，嚴禁無中生有、捏造內容或轉述未經證實的謠言（內容不實）。
 3. 政治與敏感議題去情緒化：涉及政治、國際衝突或社會事件時，僅客觀陳述「發生了什麼事」，不使用煽動性、極端或帶有強烈立場的用語。
-4. 語氣幽默、吐槽或帶有輕微爭議點（例如：吐槽某個生肖配對今天的運勢）。
+4. 語氣幽默、吐槽或帶有輕微爭議點（例如：吐槽新聞裡的荒謬現象）。
 5. 強烈引導讀者 Tag 朋友或留言（例如：「@你覺得今天的新聞報導是真實且極具參考價值的朋友」、「覺得準的留言1」）。
 6. 不要寫任何標題，直接輸出留言文字即可。
 """
@@ -56,7 +56,7 @@ def generate_horoscope_content():
                 contents=prompt
             )
             res_reply = client.models.generate_content(
-                model="gemini-3-flash-preview",
+                model="gemini-3.6-flash",
                 contents=reply_prompt
             )
             
@@ -151,8 +151,8 @@ def post_to_threads(text_content, reply_content):
     return True
 
 if __name__ == "__main__":
-    print("🔮 [測試版本] 開始生成今日星座貼文與熱門留言...")
-    content, reply_comment = generate_horoscope_content()
+    print("🔮 [測試版本] 開始生成今日國際與台灣新聞貼文與熱門留言...")
+    content, reply_comment = generate_news_content()
     print("📝 生成貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
     print(f"💬 自回留言預覽：{reply_comment}")
     post_to_threads(content, reply_comment)
