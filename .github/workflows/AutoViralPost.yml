@@ -37,10 +37,10 @@ jobs:
         run: ls -R
 
       - name: Fetch trending
-        run: python main/fetch_trending.py
+        run: python fetch_trending.py
 
       - name: Generate post
-        run: python main/generate_post.py
+        run: python generate_post.py
 
       - name: Publish to Threads
-        run: python main/post_threads.py
+        run: python post_threads.py
