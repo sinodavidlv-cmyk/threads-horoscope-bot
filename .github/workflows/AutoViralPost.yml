@@ -22,12 +22,12 @@ jobs:
 
       - name: Fetch trending content
         run: |
-          python scripts/fetch_trending.py
+          python main/fetch_trending.py
 
       - name: Generate post with Gemini
         run: |
-          python scripts/generate_post.py
+          python main/generate_post.py
 
       - name: Publish to Threads
         run: |
-          python scripts/post_threads.py
+          python main/post_threads.py
