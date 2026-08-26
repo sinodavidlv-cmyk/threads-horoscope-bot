@@ -22,15 +22,15 @@ jobs:
 
       - name: Fetch trending content
         run: |
-          python main/fetch_trending.py
+          python fetch_trending.py
 
       - name: Generate post with Gemini
         run: |
-          python main/generate_post.py
+          python generate_post.py
 
       - name: Publish to Threads
         run: |
-          python main/post_threads.py
+          python post_threads.py
           
       # 🔍 Debug step：列出檔案結構
       - name: List files
