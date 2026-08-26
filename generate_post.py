@@ -13,13 +13,11 @@ def generate_post(trending_item):
         }]
     }
     res = requests.post(url, headers=headers, json=payload)
-    data = res.json()
-    
-    # ✅ 防呆檢查，避免 KeyError
-    if "candidates" in data and len(data["candidates"]) > 0:
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+ data = res.json()
+
+if "candidates" in data and len(data["candidates"]) > 0:
+    return data["candidates"][0]["content"]["parts"][0]["text"]
 else:
-    # 如果 API 沒有回傳 candidates，就回傳錯誤訊息或原始 JSON
     return f"Error: {data}"
 
 if __name__ == "__main__":
