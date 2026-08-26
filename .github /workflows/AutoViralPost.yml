@@ -1,0 +1,33 @@
+name: Auto Viral Post
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # 每天早上 9 點執行
+  workflow_dispatch:       # 手動觸發
+
+jobs:
+  post-to-threads:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch trending content
+        run: |
+          python scripts/fetch_trending.py
+
+      - name: Generate post with Gemini
+        run: |
+          python scripts/generate_post.py
+
+      - name: Publish to Threads
+        run: |
+          python scripts/post_threads.py
