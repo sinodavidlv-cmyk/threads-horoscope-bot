@@ -5,7 +5,8 @@ def fetch_google_trends():
     from pytrends.request import TrendReq
     pytrends = TrendReq(hl='en-US', tz=360)
     pytrends.build_payload(kw_list=['news'])
-    trending = pytrends.trending_searches(pn='taiwan')
+    pytrends.build_payload(kw_list=['AI'], geo='TW', timeframe='now 7-d')
+trending = pytrends.interest_over_time()
     return trending[0].tolist()[:5]  # 取前五名
 
 def fetch_reddit_trending():
