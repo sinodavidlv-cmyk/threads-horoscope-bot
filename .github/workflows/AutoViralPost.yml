@@ -31,3 +31,16 @@ jobs:
       - name: Publish to Threads
         run: |
           python main/post_threads.py
+          
+      # 🔍 Debug step：列出檔案結構
+      - name: List files
+        run: ls -R
+
+      - name: Fetch trending
+        run: python main/fetch_trending.py
+
+      - name: Generate post
+        run: python main/generate_post.py
+
+      - name: Publish to Threads
+        run: python main/post_threads.py
