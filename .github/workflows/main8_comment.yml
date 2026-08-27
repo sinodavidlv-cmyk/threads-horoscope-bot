@@ -3,8 +3,8 @@ name: Test Auto Reply Threads Bot 8
 on:
   schedule:
     # 說明：UTC 時間比台灣慢 8 小時。
-    # 台灣時間 週一至週五 凌晨 01:30 = UTC 時間 週日至週四 17:30
-    - cron: '30 17 * * 0-4'
+    # 台灣時間 週一至週五 凌晨 01:36 = UTC 時間 週日至週四 17:36
+    - cron: '36 17 * * 0-4'
   workflow_dispatch: # 讓你在 GitHub 網頁上可以手動點選按鈕執行測試，不會影響定時發文
 
 jobs:
