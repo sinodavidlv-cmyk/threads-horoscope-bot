@@ -4,7 +4,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
 
-# 1. 呼叫 Gemini AI 生成每日新聞
+# 1. 呼叫 Gemini AI 生成每日新聞_
 def generate_news_content():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
