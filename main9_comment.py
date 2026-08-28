@@ -4,7 +4,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
 
-# 1. 呼叫 Gemini AI 生成每日 12 生肖配對運勢
+# 1. 呼叫 Gemini AI 生成每日 12 生肖配對運勢_
 def generate_horoscope_content():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
