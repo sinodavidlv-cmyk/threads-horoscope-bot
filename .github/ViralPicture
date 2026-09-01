@@ -1,0 +1,28 @@
+name: Auto Viral Image
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # 每天台灣時間早上9點執行 (UTC+8 → cron 1 AM UTC)
+  workflow_dispatch:       # 可手動觸發
+
+jobs:
+  viral-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install requests pytrends
+
+      - name: Run viral generator
+        run: python autoviral.py
+        env:
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
