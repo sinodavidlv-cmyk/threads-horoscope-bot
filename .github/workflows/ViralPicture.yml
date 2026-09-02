@@ -2,7 +2,7 @@ name: Auto Viral Image
 
 on:
   schedule:
-    - cron: "0 1 * * *"   # 每天台灣時間早上9點執行 (UTC+8 → cron 1 AM UTC)
+    - cron: "0 2 * * *"   # 每天台灣時間早上10點執行 (UTC+8 → cron 2 AM UTC)
   workflow_dispatch:       # 可手動觸發
 
 jobs:
