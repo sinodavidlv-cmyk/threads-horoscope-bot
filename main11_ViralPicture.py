@@ -1,13 +1,20 @@
-import requests, os, json
-from pytrends.request import TrendReq
+import os
+import xml.etree.ElementTree as ET
+import requests
 
 THREADS_ACCESS_TOKEN = os.getenv("THREADS_ACCESS_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 def fetch_google_trends():
-    pytrends = TrendReq(hl='zh-TW', tz=480)
-    trending = pytrends.trending_searches(pn='taiwan')
-    return trending[0].tolist()[:5]
+  try:
+    res = requests.get(
+        'https://trends.google.com.tw/trending/rss?geo=TW',
+        headers={'User-Agent': 'Mozilla/5.0'},
+    )
+    root = ET.fromstring(res.content)
+    return [item.find('title').text for item in root.findall('.//item')][:5]
+  except Exception:
+    return ['熱門話題']
 
 def fetch_reddit_trending():
     url = "https://www.reddit.com/r/popular.json"
