@@ -67,7 +67,7 @@ def generate_news_content():
         except Exception as e:
             if attempt == 2:
                 raise e
-            time.sleep(3)
+            time.sleep(10)
 
 # 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
