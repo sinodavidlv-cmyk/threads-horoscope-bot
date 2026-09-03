@@ -18,10 +18,15 @@ def fetch_google_trends():
 
 def fetch_reddit_trending():
     url = "https://www.reddit.com/r/popular.json"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    res = requests.get(url, headers=headers)
-    data = res.json()
-    return [item["data"]["title"] for item in data["data"]["children"][:5]]
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    try:
+        res = requests.get(url, headers=headers, timeout=15)
+        if res.status_code != 200:
+            return []
+        data = res.json()
+        return [item["data"]["title"] for item in data["data"]["children"][:5]]
+    except Exception:
+        return []
 
 def score_topic(topic):
     score = 0
