@@ -53,7 +53,10 @@ def generate_prompt(topic):
 def post_to_threads(content):
     url = "https://graph.threads.net/v1.0/me/threads"
     headers = {"Authorization": f"Bearer {THREADS_ACCESS_TOKEN}"}
-    payload = {"text": content}
+    payload = {
+        "media_type": "TEXT",
+        "text": content
+    }
     res = requests.post(url, headers=headers, data=payload)
     return res.json()
 
