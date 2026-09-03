@@ -24,6 +24,8 @@ def fetch_reddit_trending():
         if res.status_code != 200:
             return []
         data = res.json()
+        if not isinstance(data, dict) or "data" not in data or "children" not in data["data"]:
+            return []
         return [item["data"]["title"] for item in data["data"]["children"][:5]]
     except Exception:
         return []
