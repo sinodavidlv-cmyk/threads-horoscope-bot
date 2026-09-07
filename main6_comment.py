@@ -106,7 +106,7 @@ def post_to_threads(text_content, reply_content):
         "access_token": access_token
     }
     
-    pub_res = requests.post(publish_url, data=pub_payload, timeout=15).json()
+    pub_res = requests.post(publish_url, data=pub_payload, timeout=30).json()
     published_id = pub_res.get("id")
     
     if not published_id:
