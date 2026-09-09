@@ -44,7 +44,6 @@ def generate_horoscope_content():
         "請寫一則幽默的自回互動留言（50字以內），問大家今天是不是也跟某個星座一樣心情很爛，引導洗版留言。不要寫任何標題，直接輸出留言文字即可。"
     ]
     reply_prompt = random.choice(reply_prompts)   
-"""
 
     for attempt in range(3):
         try:
