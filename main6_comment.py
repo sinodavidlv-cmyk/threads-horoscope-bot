@@ -148,6 +148,14 @@ def post_to_threads(text_content, reply_content):
     return True
 
 if __name__ == "__main__":
+    # 隨機延遲 0 到 900 秒（0 到 15 分鐘），打破固定的秒數/整點觸發特徵
+    import random
+    import time
+    
+    delay_seconds = random.randint(0, 900)
+    print(f"⏳ [排程隱匿] 隨機延遲等待 {delay_seconds} 秒後開始執行...")
+    time.sleep(delay_seconds)
+    
     print("🔮 [測試版本] 開始生成今日星座貼文與熱門留言...")
     content, reply_comment = generate_horoscope_content()
     print("📝 生成貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
