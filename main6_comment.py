@@ -162,12 +162,6 @@ if __name__ == "__main__":
     delay_seconds = random.randint(0, 900)
     print(f"⏳ [排程隱匿] 隨機延遲等待 {delay_seconds} 秒後開始執行...")
     time.sleep(delay_seconds)
-
-    # 2. 錯誤偽裝與休息機制：加入 10% 的隨機公休機率，模擬真人偶爾懶得發文
-    # 如果不想用隨機公休，可把 10 改成 0
-    if random.randint(1, 100) <= 10:
-        print("🏖️ [休息機制] 今天心情好想放假，小編決定今天公休一次，跳過發文！")
-        exit(0)
     
     print("🔮 [測試版本] 開始生成今日星座貼文與熱門留言...")
     content, reply_comment = generate_horoscope_content()
