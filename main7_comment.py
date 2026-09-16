@@ -55,8 +55,8 @@ def generate_horoscope_content():
 【絕對必填規則（缺一不可）】
 1. 語氣幽默、吐槽或帶有輕微爭議點（例如吐槽某個星座）。
 2. 強烈引導讀者 Tag 朋友或留言（例如：「@你身邊那個雙子座」）。
-3. 結尾【必須】原封不動加上這段推廣文字與網址（一個字都不能少）：
-   最近想幫自己補磁場的可以參考 👉 {current_product['name']}：{current_product['url']}
+#3. 結尾【必須】原封不動加上這段推廣文字與網址（一個字都不能少）：
+  # 最近想幫自己補磁場的可以參考 👉 {current_product['name']}：{current_product['url']}
 """
 
     for attempt in range(3):
