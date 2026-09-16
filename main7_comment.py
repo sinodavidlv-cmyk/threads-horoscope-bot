@@ -15,7 +15,7 @@ def generate_horoscope_content():
     # 1. 先計算台灣時間 (UTC+8) 的當日日期
     tz_taiwan = timezone(timedelta(hours=8))
     today_str = datetime.now(tz_taiwan).strftime("%m/%d")
-
+    '''
     products = [
         {"name": "水晶能量小物", "url": "https://s.shopee.tw/2g8Wq6DKc7"},
         {"name": "療癒水晶飾品", "url": "https://s.shopee.tw/1Ld9Go2FOh"},
@@ -26,7 +26,7 @@ def generate_horoscope_content():
     # 取得今天是星期幾（weekday()：0=週一, 1=週二... 4=週五），對 5 取餘數確保只在 0~4 之間循環
     day_index = datetime.now(tz_taiwan).weekday() % len(products)
     current_product = products[day_index]
-    
+    '''
     # 2. 將 prompt 改為 f-string (注意 prompt = f""" 的小寫 f)
     # 並直接把 {today_str} 帶入 Prompt 內
     prompt = f"""
