@@ -62,8 +62,8 @@ def generate_horoscope_content():
     )
 
     if not api_key:
-    raise ValueError(
-        "找不到 GEMINI_API_KEY"
+        raise ValueError(
+            "找不到 GEMINI_API_KEY"
     )
 
     client = genai.Client(
