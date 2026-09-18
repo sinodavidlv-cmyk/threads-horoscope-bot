@@ -27,6 +27,9 @@ def generate_horoscope_content():
     day_index = datetime.now(tz_taiwan).weekday() % len(products)
     current_product = products[day_index]
     '''
+    # 【最低限度新增】給定一個空殼，讓下面 reply_prompt 讀取時不會因找不到變數而崩潰
+    current_product = {"name": "", "url": ""}
+    
     # 2. 將 prompt 改為 f-string (注意 prompt = f""" 的小寫 f)
     # 並直接把 {today_str} 帶入 Prompt 內
     prompt = f"""
