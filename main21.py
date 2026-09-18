@@ -3,7 +3,6 @@ from datetime import datetime, timezone, timedelta
 
 from google import genai
 from products import products
-from google import genai
 
 def load_history():
 
@@ -104,6 +103,8 @@ def generate_horoscope_content():
     )
 
     return response.text
+
+
 def main():
 
     print("================================")
@@ -121,8 +122,7 @@ def main():
     print("歷史內容長度:", len(history))
 
     print("系統初始化完成")
-
-print("Gemini功能已載入")
+    print("Gemini功能已載入")
 
 
 if __name__ == "__main__":
