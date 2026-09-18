@@ -54,6 +54,7 @@ def select_product():
 
     return products[day_index]
 
+
 def generate_horoscope_content():
 
     api_key = os.getenv(
