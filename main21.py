@@ -60,7 +60,7 @@ def generate_horoscope_content():
     "GEMINI_API_KEY"
     )
 
-if not api_key:
+    if not api_key:
     raise ValueError(
         "找不到 GEMINI_API_KEY"
     )
