@@ -110,7 +110,58 @@ def generate_horoscope_content():
 
     return response.text
 
+def generate_hashtags():
 
+    api_key = os.getenv(
+        "GEMINI_API_KEY"
+    )
+
+    client = genai.Client(
+        api_key=api_key
+    )
+
+    prompt = """
+請產生10個適合Threads的繁體中文Hashtag。
+
+只輸出Hashtag。
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
+    return response.text
+
+
+def generate_reply_comments():
+
+    api_key = os.getenv(
+        "GEMINI_API_KEY"
+    )
+
+    client = genai.Client(
+        api_key=api_key
+    )
+
+    prompt = """
+請產生3則不同風格的Threads留言。
+
+規則：
+
+1. 每則50字內
+2. 有互動感
+3. 有Tag朋友衝動
+4. 用繁體中文
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
+    return response.text
+    
 def main():
 
     print("================================")
