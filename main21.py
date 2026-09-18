@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 
 from google import genai
 from products import products
-
+from google import genai
 
 def load_history():
 
@@ -55,7 +55,55 @@ def select_product():
 
     return products[day_index]
 
+def generate_horoscope_content():
 
+    api_key = os.getenv(
+        "GEMINI_API_KEY"
+    )
+
+    client = genai.Client(
+        api_key=api_key
+    )
+
+    today = get_today()
+
+    history = load_history()
+
+    prompt = f"""
+你是一位Threads星座爆文創作者。
+
+今天日期：
+
+{today}
+
+以下是歷史內容：
+
+{history}
+
+規則：
+
+1. 禁止重複歷史內容
+2. 使用繁體中文
+3. 適合Threads
+4. 有互動感
+5. 字數420字內
+
+請產生：
+
+標題
+愛情配對
+友情配對
+職場配對
+
+最後加入留言引導。
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
+    return response.text
 def main():
 
     print("================================")
@@ -73,6 +121,8 @@ def main():
     print("歷史內容長度:", len(history))
 
     print("系統初始化完成")
+
+print("Gemini功能已載入")
 
 
 if __name__ == "__main__":
