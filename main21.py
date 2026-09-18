@@ -57,7 +57,12 @@ def select_product():
 def generate_horoscope_content():
 
     api_key = os.getenv(
-        "GEMINI_API_KEY"
+    "GEMINI_API_KEY"
+    )
+
+if not api_key:
+    raise ValueError(
+        "找不到 GEMINI_API_KEY"
     )
 
     client = genai.Client(
