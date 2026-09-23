@@ -29,3 +29,14 @@ jobs:
           THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
           THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
         run: python main1.py
+        
+      - name: Commit CSV
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add data/posts.csv
+
+          git commit -m "update posts database" || echo "No changes"
+
+          git push
