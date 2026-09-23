@@ -1,7 +1,11 @@
 import os
-import time  
+import csv
+import time
 import requests
+ 
+from pathlib import Path
 from datetime import datetime, timezone, timedelta
+ 
 from google import genai
 
 # 1. 呼叫 Gemini AI 生成每日 12 星座運勢
@@ -59,6 +63,29 @@ def refresh_threads_token():
         print(f"⚠️ Token 刷新提示: {e}")
     return token
 
+def save_post_record(post_id, content):
+
+    Path("data").mkdir(exist_ok=True)
+
+    with open(
+        "data/posts.csv",
+        "a",
+        newline="",
+        encoding="utf-8-sig"
+    ) as file:
+
+        writer = csv.writer(file)
+
+        writer.writerow([
+            post_id,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "horoscope",
+            content.replace("\n", " ")
+        ])
+
+    print("✅ 已存入 posts.csv")
+``
+
 # 3. 發布貼文至 Threads API
 def post_to_threads(text_content):
     user_id = os.environ.get("THREADS_USER_ID")
@@ -93,7 +120,14 @@ def post_to_threads(text_content):
     published_id = pub_res.get("id")
     
     if published_id:
+
         print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
+
+        save_post_record(
+            published_id,
+            text_content
+        )
+
         return True
     else:
         print("❌ 發布貼文失敗:", pub_res)
