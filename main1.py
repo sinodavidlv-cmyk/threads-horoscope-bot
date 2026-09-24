@@ -56,8 +56,8 @@ def refresh_threads_token():
             print("🔄 成功刷新 Threads 長效 Token！")
             return res["access_token"]
     except Exception as e:
-        print(f"⚠️ Token 刷新提示: {e}")
-    return token
+        print(f"⚠️ Token 刷新發生錯誤: {e}")
+        raise ValueError("無法取得或刷新 Threads Access Token，請檢查環境變數。")
 
 # 3. 發布貼文至 Threads API
 def post_to_threads(text_content):
@@ -72,7 +72,7 @@ def post_to_threads(text_content):
         "access_token": access_token
     }
     
-    res = requests.post(create_url, data=payload).json()
+    res = requests.post(create_url, json=payload).json()
     creation_id = res.get("id")
     
     if not creation_id:
@@ -89,7 +89,7 @@ def post_to_threads(text_content):
         "access_token": access_token
     }
     
-    pub_res = requests.post(publish_url, data=pub_payload).json()
+    pub_res = requests.post(publish_url, json=pub_payload).json()
     published_id = pub_res.get("id")
     
     if published_id:
