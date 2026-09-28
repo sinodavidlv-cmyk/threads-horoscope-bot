@@ -70,12 +70,15 @@ def generate_horoscope_content():
             
             main_text = res_main.text.replace('\n\n', '\n').strip()
             reply_text = res_reply.text.strip()
-            
             return main_text, reply_text
         except Exception as e:
+            print(f"⚠️ 第 {attempt + 1} 次生成失敗: {e}")
             if attempt == 2:
                 raise e
-            time.sleep(10)
+            # 採用遞增等待時間（例如第1次等15秒，第2次等30秒）
+            sleep_time = (attempt + 1) * 15
+            print(f"⏳ 等待 {sleep_time} 秒後進行重試...")
+            time.sleep(sleep_time)
 
 # 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
