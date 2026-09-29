@@ -50,7 +50,6 @@ def generate_horoscope_content():
    - 「底下留言你的星座，看看今天有沒有你的天命神隊友出沒👇」
 5. 字數限制：全部字數（含標點符號、Emoji、特殊字元）必須嚴格控制在 420 字以內，留出閱讀呼吸感。
 """
-import random
     
     # 隨機抽取一種網民視角，徹底擺脫 AI 固定句型
     _style = random.choice([
