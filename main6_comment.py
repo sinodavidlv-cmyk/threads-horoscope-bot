@@ -148,7 +148,7 @@ def post_to_threads(text_content, reply_content):
         "access_token": access_token
     }
     
-    reply_res = requests.post(create_url, data=reply_container_payload).json()
+    reply_res = requests.post(create_url, data=reply_container_payload, timeout=15).json()
     reply_creation_id = reply_res.get("id")
     
     if reply_creation_id:
