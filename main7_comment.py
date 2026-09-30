@@ -3,6 +3,7 @@ import time
 import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
+import random
 
 # 1. 呼叫 Gemini AI 生成每日 12 星座配對運勢_
 def generate_horoscope_content():
