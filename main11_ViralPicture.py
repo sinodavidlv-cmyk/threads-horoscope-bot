@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import xml.etree.ElementTree as ET
 import requests
@@ -25,7 +26,7 @@ def fetch_google_trends():
 def fetch_reddit_trending():
     """抓取 Reddit 熱門話題"""
     url = "https://www.reddit.com/r/popular.json"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    headers = {"User-Agent": "ThreadsHoroscopeBot/1.0 (Contact: admin@example.com)"}
     try:
         res = requests.get(url, headers=headers, timeout=15)
         if res.status_code != 200:
@@ -59,7 +60,6 @@ def post_to_threads(content):
     if not THREADS_ACCESS_TOKEN:
         print("Error: THREADS_ACCESS_TOKEN is missing.")
         return None
-        
     url = "https://graph.threads.net/v1.0/me/threads"
     headers = {"Authorization": f"Bearer {THREADS_ACCESS_TOKEN}"}
     payload = {
