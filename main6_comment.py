@@ -59,14 +59,18 @@ def generate_horoscope_content():
 
     for attempt in range(3):
         try:
+            # 修正第一處：主貼文
             res_main = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=prompt
             )
+            )
             time.sleep(2)  # 緩衝間隔，降低伺服器瞬時壓力
+            # 修正第二處：自回留言（這裡絕對不能漏掉！）
             res_reply = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=reply_prompt
+            )
             )
             
             main_text = res_main.text.replace('\n\n', '\n').strip()
