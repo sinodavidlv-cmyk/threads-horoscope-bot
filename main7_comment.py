@@ -13,6 +13,10 @@ def generate_horoscope_content():
 
     client = genai.Client(api_key=api_key)
 
+    # 定義可用的模型順序（主要模型與備援模型）
+    MODEL_PRIMARY = "gemini-2.5-flash"
+    MODEL_FALLBACK = "gemini-3.8-flash"
+
     # 1. 先計算台灣時間 (UTC+8) 的當日日期
     tz_taiwan = timezone(timedelta(hours=8))
     today_str = datetime.now(tz_taiwan).strftime("%m/%d")
