@@ -57,7 +57,7 @@ def generate_horoscope_content():
     ]
     reply_prompt = random.choice(reply_prompts)   
 
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             # 修正第一處：主貼文
             res_main = client.models.generate_content(
@@ -77,7 +77,7 @@ def generate_horoscope_content():
             return main_text, reply_text
         except Exception as e:
             print(f"⚠️ 第 {attempt + 1} 次生成失敗: {e}")
-            if attempt == 2:
+            if attempt == 4:
                 raise e
             # 採用遞增等待時間（例如第1次等15秒，第2次等30秒）
             sleep_time = (attempt + 1) * 15
