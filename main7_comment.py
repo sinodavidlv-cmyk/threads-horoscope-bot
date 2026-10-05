@@ -4,55 +4,8 @@ import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
 import random
-from google.genai import errors
 
-# 獨立的 Gemini 安全呼叫函式 (含 Fallback 與 Exponential Backoff)
-def safe_generate(client, prompt, system_instruction=None):
-    # 定義嘗試的模型順序
-    models_to_try = [
-        "gemini-2.5-flash",  # 主要模型
-        "gemini-3.8-flash"   # 備援模型
-    ]
-    
-    last_error = None
-
-    for model_name in models_to_try:
-        print(f"🔄 嘗試使用模型生成: {model_name}...")
-        
-        # 每個模型給予 3 次重試機會 (Exponential Backoff: 2s, 4s, 8s)
-        for attempt in range(3):
-            try:
-                kwargs = {"contents": prompt}
-                if system_instruction:
-                    kwargs["config"] = genai.types.GenerateContentConfig(
-                        system_instruction=system_instruction
-                    )
-                    
-                response = client.models.generate_content(
-                    model=model_name,
-                    **kwargs
-                )
-                print(f"✅ 使用 {model_name} 成功生成內容！")
-                return response.text.strip()
-
-            except errors.APIError as e:
-                last_error = e
-                wait_time = 2 ** (attempt + 1)  # 2秒, 4秒, 8秒
-                print(f"⚠️ [{model_name}] 遇到 API 錯誤 (Code: {e.code})，{wait_time} 秒後重試 (第 {attempt + 1}/3 次)...")
-                time.sleep(wait_time)
-                
-            except Exception as e:
-                # 非 API 相關的致命程式碼錯誤，不浪費時間重試直接丟出
-                print(f"❌ 發生非 API 錯誤: {e}")
-                raise e
-
-        print(f"🚨 模型 {model_name} 嘗試 3 次均失敗，準備切換至下一個備援模型...\n")
-
-    # 若所有模型皆失敗，拋出最後錯誤
-    raise RuntimeError(f"❌ 所有 Gemini 模型均呼叫失敗！最後錯誤: {last_error}")
-
-
-# 1. 呼叫 Gemini AI 生成每日 12 星座配對運勢
+# 1. 呼叫 Gemini AI 生成每日 12 星座配對運勢_
 def generate_horoscope_content():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -60,14 +13,34 @@ def generate_horoscope_content():
 
     client = genai.Client(api_key=api_key)
 
+    # 1. 先計算台灣時間 (UTC+8) 的當日日期
     tz_taiwan = timezone(timedelta(hours=8))
     today_str = datetime.now(tz_taiwan).strftime("%m/%d")
-
+    '''
+    products = [
+        {"name": "水晶能量小物", "url": "https://s.shopee.tw/2g8Wq6DKc7"},
+        {"name": "療癒水晶飾品", "url": "https://s.shopee.tw/1Ld9Go2FOh"},
+        {"name": "水晶手機鍊", "url": "https://s.shopee.tw/7VFqhz1pQ9"},
+        {"name": "十二星座手鍊", "url": "https://s.shopee.tw/7Ad0JTWISK"},
+        {"name": "天然水晶手鍊", "url": "https://s.shopee.tw/5q7cjOXEpd"},
+    ]
+    # 取得今天是星期幾（weekday()：0=週一, 1=週二... 4=週五），對 5 取餘數確保只在 0~4 之間循環
+    day_index = datetime.now(tz_taiwan).weekday() % len(products)
+    current_product = products[day_index]
+    '''
+    # 【最低限度新增】給定一個空殼，讓下面 reply_prompt 讀取時不會因找不到變數而崩潰
     current_product = {"name": "", "url": ""}
-
+    
+    # 2. 將 prompt 改為 f-string (注意 prompt = f""" 的小寫 f)
+    # 並直接把 {today_str} 帶入 Prompt 內
     prompt = f"""
 你是一位講話精闢、帶有一點幽默感與犀利洞察力的 Threads 星座語錄大師。
 請為 Threads 撰寫一則繁體中文「今日 12 星座最佳配對與火花解析」。
+
+【消除 AI 感與爆發互動規則】
+1. 人性化語氣：拒絕教科書式的罐頭評語！請用 Threads 爆款貼文最愛的「語錄體」或「扎心金句」，文字要接地氣、有共鳴感。
+2. 製造話題與對立：說明配對時，除了寫優點，也要加入趣味的「相處地雷」或「吐槽點」（例如：愛情是天作之合，但小心吵架時兩個都硬脾氣）。
+3. 強力引導互動（鉤子）：結尾必須包含高轉發、高留言的行動呼籲（Call to Action），引導讀者標記朋友或留言自首。
 
 【貼文要求】
 1. 開頭標題：格式必須為 "{today_str}今日十二星座最佳配對: "，後面接一句超吸睛的犀利金句。
@@ -78,7 +51,8 @@ def generate_horoscope_content():
    - 「底下留言你的星座，看看今天有沒有你的天命神隊友出沒👇」
 5. 字數限制：全部字數（含標點符號、Emoji、特殊字元）必須嚴格控制在 420 字以內，留出閱讀呼吸感。
 """
-
+    
+    # 隨機抽取一種網民視角，徹底擺脫 AI 固定句型
     _style = random.choice([
         "【視角：職場慣老闆】冷血吐槽工作上的星座盲點，帶點諷刺幽默。",
         "【視角：戀愛腦翻車】犀利吐槽感情中盲目的星座，語氣像在吃瓜。",
@@ -86,6 +60,7 @@ def generate_horoscope_content():
         "【視角：衝浪幹話王】用最直白的一句話幹話，激起群憤或共鳴，但留言要避免涉及 人身攻擊、政治、宗教，專注在「共同經驗」或「輕鬆互動」。"
     ])
 
+    # 自回留言 Prompt
     reply_prompt = f"""
 你是一位講話極度犀利、常在 Threads 抓馬區出沒的狠人網友。
 請針對今天的星座運勢，寫一則短小精悍（50字以內）的自回留言。
@@ -97,17 +72,29 @@ def generate_horoscope_content():
 1. 拒絕 AI 罐頭感：嚴禁使用「今天」、「各位」、「真的」、「笑死」等機器人開頭或贅字，要像真人打字一樣口語、隨性。
 2. 毒舌吐槽：必須針對某個星座開砲、掀底牌或製造輕微的爭議與對立。
 3. 強烈互動鉤子：結尾必須自然地引導讀者標記朋友或留言自首（例如：「@身邊那個死不認錯的雙子」或「留言區開放受害者報數👇」）。
+#4. 結尾【必須】原封不動加上這段推廣文字與網址（一個字都不能少）：
+  # 最近想幫自己補磁場的可以參考 👉 {current_product['name']}：{current_product['url']}
 """
 
-    # 主文與留言分開生成，互不干擾
-    print("📝 開始生成主文...")
-    raw_main = safe_generate(client, prompt)
-    main_text = raw_main.replace('\n\n', '\n').strip()
-
-    print("💬 開始生成第一樓留言...")
-    reply_text = safe_generate(client, reply_prompt)
-
-    return main_text, reply_text
+    for attempt in range(3):
+        try:
+            res_main = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=prompt
+            )
+            res_reply = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=reply_prompt
+            )
+            
+            main_text = res_main.text.replace('\n\n', '\n').strip()
+            reply_text = res_reply.text.strip()
+            
+            return main_text, reply_text
+        except Exception as e:
+            if attempt == 2:
+                raise e
+            time.sleep(10)
 
 # 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
