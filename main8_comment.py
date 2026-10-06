@@ -45,11 +45,11 @@ def generate_horoscope_content():
     for attempt in range(3):
         try:
             res_main = client.models.generate_content(
-                model="gemini-3.6-flash",
+                model="gemini-3.8-flash",
                 contents=prompt
             )
             res_reply = client.models.generate_content(
-                model="gemini-3-flash-preview",
+                model="gemini-3.8-flashw",
                 contents=reply_prompt
             )
             
