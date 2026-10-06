@@ -77,7 +77,7 @@ def generate_horoscope_content():
             return main_text, reply_text
         except Exception as e:
             print(f"⚠️ 第 {attempt + 1} 次生成失敗: {e}")
-            if attempt == 4:
+            if attempt == 7:
                 raise e
             # 採用遞增等待時間（例如第1次等15秒，第2次等30秒）
             sleep_time = (attempt + 1) * 15
