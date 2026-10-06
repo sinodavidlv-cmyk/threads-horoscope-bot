@@ -57,7 +57,7 @@ def generate_horoscope_content():
     ]
     reply_prompt = random.choice(reply_prompts)   
 
-    for attempt in range(5):
+    for attempt in range(10):
         try:
             # 修正第一處：主貼文
             res_main = client.models.generate_content(
