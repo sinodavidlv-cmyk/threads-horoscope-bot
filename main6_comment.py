@@ -78,13 +78,18 @@ def generate_horoscope_content():
                     contents=reply_prompt
                 )
 
+                if not getattr(res_main, "text", None):
+                    raise ValueError(f"Empty response from {model_name}")
+                if not getattr(res_reply, "text", None):
+                    raise ValueError(f"Empty reply response from {model_name}")
+
                 main_text = res_main.text.replace('\n\n', '\n').strip()
                 reply_text = res_reply.text.strip()
                 return main_text, reply_text
 
             except Exception as e:
                 print(f"⚠️ Model={model_name}, attempt={attempt + 1}, error={e}")
-
+        
         backoff = min(300, (2 ** attempt) * 15)
         print(f"⏳ 等待 {backoff} 秒後重試...")
         time.sleep(backoff)
