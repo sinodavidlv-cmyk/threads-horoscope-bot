@@ -57,32 +57,34 @@ def generate_horoscope_content():
     ]
     reply_prompt = random.choice(reply_prompts)   
 
-    for attempt in range(10):
-        try:
-            # 修正第一處：主貼文
-            res_main = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=prompt
-            )
+    models_to_try = ["gemini-3.8-flash", "gemini-2.0-flash"]
 
-            time.sleep(2)  # 緩衝間隔，降低伺服器瞬時壓力
-            # 修正第二處：自回留言（這裡絕對不能漏掉！）
-            res_reply = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=reply_prompt
-            )
-            
-            main_text = res_main.text.replace('\n\n', '\n').strip()
-            reply_text = res_reply.text.strip()
-            return main_text, reply_text
-        except Exception as e:
-            print(f"⚠️ 第 {attempt + 1} 次生成失敗: {e}")
-            if attempt == 7:
-                raise e
-            # 採用遞增等待時間（例如第1次等15秒，第2次等30秒）
-            sleep_time = (attempt + 1) * 15
-            print(f"⏳ 等待 {sleep_time} 秒後進行重試...")
-            time.sleep(sleep_time)
+    for attempt in range(8):
+        for model_name in models_to_try:
+            try:
+                res_main = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+
+                time.sleep(2)
+                res_reply = client.models.generate_content(
+                    model=model_name,
+                    contents=reply_prompt
+                )
+
+                main_text = res_main.text.replace('\n\n', '\n').strip()
+                reply_text = res_reply.text.strip()
+                return main_text, reply_text
+
+            except Exception as e:
+                print(f"⚠️ Model={model_name}, attempt={attempt + 1}, error={e}")
+
+        backoff = min(300, (2 ** attempt) * 15)
+        print(f"⏳ 等待 {backoff} 秒後重試...")
+        time.sleep(backoff)
+
+    raise RuntimeError("Gemini API remained unavailable after retries")
 
 # 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
