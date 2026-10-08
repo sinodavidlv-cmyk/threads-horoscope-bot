@@ -75,7 +75,7 @@ def generate_horoscope_content():
     models_to_try = ["gemini-3.8-flash", "gemini-2.0-flash"]
 
     for attempt in range(8):
-    for model_name in models_to_try:
+        for model_name in models_to_try:
         try:
             res_main = client.models.generate_content(
                 model=model_name,
