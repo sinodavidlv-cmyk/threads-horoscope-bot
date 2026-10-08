@@ -70,7 +70,7 @@ def generate_horoscope_content():
         f"請根據以下主貼文內容，寫一則超吸睛的 MBTI × 星座留言（50字以內），直接回應主貼文中的運勢重點，像個在吃瓜的朋友一樣吐槽。內容要和主貼文內容高度一致，不能空泛。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
         f"請根據以下主貼文內容，寫一則帶有強烈共鳴感的自回留言（50字以內），重點是直接回應今天主貼文裡最慘/最衰的星座，讓大家覺得這篇貼文真是對號入座。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti_pair}。請避開人身攻擊、政治、宗教敏感話題。",
     ]
-    reply_prompt = random.choice(reply_prompts))
+    reply_prompt = random.choice(reply_prompts)
 
     models_to_try = ["gemini-3.8-flash", "gemini-2.0-flash"]
 
