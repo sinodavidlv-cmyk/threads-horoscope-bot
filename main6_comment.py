@@ -75,32 +75,57 @@ def generate_horoscope_content():
     models_to_try = ["gemini-3.8-flash", "gemini-2.0-flash"]
 
     for attempt in range(8):
-        for model_name in models_to_try:
-            try:
-                # 修正第一處：主貼文
-                res_main = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt
-                )
+    for model_name in models_to_try:
+        try:
+            res_main = client.models.generate_content(
+                model=model_name,
+                contents=prompt
+            )
 
-                time.sleep(2)  # 緩衝間隔，降低伺服器瞬時壓力
-                # 修正第二處：自回留言
-                res_reply = client.models.generate_content(
-                    model=model_name,
-                    contents=reply_prompt
-                )
+            if not getattr(res_main, "text", None):
+                raise ValueError(f"Empty response from {model_name}")
 
-                if not getattr(res_main, "text", None):
-                    raise ValueError(f"Empty response from {model_name}")
-                if not getattr(res_reply, "text", None):
-                    raise ValueError(f"Empty reply response from {model_name}")
+            main_text = res_main.text.replace('\n\n', '\n').strip()
 
-                main_text = res_main.text.replace('\n\n', '\n').strip()
-                reply_text = res_reply.text.strip()
-                return main_text, reply_text
+            # 先產生 main_text，再根據它生成 reply_prompts
+            mbti_types = [
+                "INTJ", "INTP", "ENTJ", "ENTP",
+                "INFJ", "INFP", "ENFJ", "ENFP",
+                "ISTJ", "ISFJ", "ESTJ", "ESFJ",
+                "ISTP", "ISFP", "ESTP", "ESFP"
+            ]
+            selected_mbti = random.choice(mbti_types)
+            selected_mbti_pair = random.choice([m for m in mbti_types if m != selected_mbti])
 
-            except Exception as e:
-                print(f"⚠️ Model={model_name}, attempt={attempt + 1}, error={e}")
+            reply_prompts = [
+                f"請根據以下主貼文內容，寫一則短小精悍（50字以內）的自回留言。內容必須直接回應「今日的星座運勢」，不能泛泛而談。語氣像個愛吐槽的網友，並強烈引導讀者留言。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
+                f"請根據以下主貼文內容，寫一則 Threads 上熱門第一樓留言（50字以內），直接吐槽當天主貼文裡最慘的星座，並叫大家留言卡位。內容必須對應主貼文的星座運勢，不能講空泛話。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
+                f"請根據以下主貼文內容，寫一則幽默的自回互動留言（50字以內），問大家今天是不是也跟主貼文裡某個星座一樣心情很爛，並引導洗版留言。內容必須明確回應今天的運勢，不能只說大方向。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
+                f"請根據以下主貼文內容，寫一則幽默共感留言（50字以內），用比喻或小笑話直接回應今日星座運勢，讓大家覺得這篇貼文真命中。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti_pair}。請避開人身攻擊、政治、宗教敏感話題。",
+                f"請根據以下主貼文內容，寫一則開放式問答留言（50字以內），直接拋出和今日星座運勢相關的問題，讓大家忍不住留言回覆。內容一定要對應主貼文內容，不要講與主題無關的話。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
+                f"請根據以下主貼文內容，寫一則讚美＋延伸留言（50字以內），先肯定主貼文很準，再把今日運勢延伸成 MBTI 人格版的共鳴。內容必須強烈對應今日貼文。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
+                f"請根據以下主貼文內容，寫一則生活連結留言（50字以內），把今日星座運勢和大家日常經驗連起來，讓人覺得貼文真的在說自己。內容必須正確回應主貼文主題。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
+                f"請根據以下主貼文內容，寫一則超吸睛的 MBTI × 星座留言（50字以內），直接回應主貼文中的運勢重點，像個在吃瓜的朋友一樣吐槽。內容要和主貼文內容高度一致，不能空泛。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
+                f"請根據以下主貼文內容，寫一則帶有強烈共鳴感的自回留言（50字以內），重點是直接回應今天主貼文裡最慘/最衰的星座，讓大家覺得這篇貼文真是對號入座。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti_pair}。請避開人身攻擊、政治、宗教敏感話題。",
+            ]
+
+            reply_prompt = random.choice(reply_prompts)
+
+            time.sleep(2)
+
+            res_reply = client.models.generate_content(
+                model=model_name,
+                contents=reply_prompt
+            )
+
+            if not getattr(res_reply, "text", None):
+                raise ValueError(f"Empty reply response from {model_name}")
+
+            reply_text = res_reply.text.strip()
+            return main_text, reply_text
+
+        except Exception as e:
+            print(f"⚠️ Model={model_name}, attempt={attempt + 1}, error={e}")
         
         backoff = min(300, (2 ** attempt) * 15)
         print(f"⏳ 等待 {backoff} 秒後重試...")
