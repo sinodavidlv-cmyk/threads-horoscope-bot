@@ -50,27 +50,6 @@ def generate_horoscope_content():
 
     # 隨機自回留言切入角度
     # 讓自回留言必須「直接對應今日主貼文的星座運勢」
-    mbti_types = [
-        "INTJ", "INTP", "ENTJ", "ENTP",
-        "INFJ", "INFP", "ENFJ", "ENFP",
-        "ISTJ", "ISFJ", "ESTJ", "ESFJ",
-        "ISTP", "ISFP", "ESTP", "ESFP"
-    ]
-    selected_mbti = random.choice(mbti_types)
-    selected_mbti_pair = random.choice([m for m in mbti_types if m != selected_mbti])
-    
-    reply_prompts = [
-        f"請根據以下主貼文內容，寫一則短小精悍（50字以內）的自回留言。內容必須直接回應「今日的星座運勢」，不能泛泛而談。語氣像個愛吐槽的網友，並強烈引導讀者留言。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
-        f"請根據以下主貼文內容，寫一則 Threads 上熱門第一樓留言（50字以內），直接吐槽當天主貼文裡最慘的星座，並叫大家留言卡位。內容必須對應主貼文的星座運勢，不能講空泛話。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
-        f"請根據以下主貼文內容，寫一則幽默的自回互動留言（50字以內），問大家今天是不是也跟主貼文裡某個星座一樣心情很爛，並引導洗版留言。內容必須明確回應今天的運勢，不能只說大方向。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
-        f"請根據以下主貼文內容，寫一則幽默共感留言（50字以內），用比喻或小笑話直接回應今日星座運勢，讓大家覺得這篇貼文真命中。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti_pair}。請避開人身攻擊、政治、宗教敏感話題。",
-        f"請根據以下主貼文內容，寫一則開放式問答留言（50字以內），直接拋出和今日星座運勢相關的問題，讓大家忍不住留言回覆。內容一定要對應主貼文內容，不要講與主題無關的話。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
-        f"請根據以下主貼文內容，寫一則讚美＋延伸留言（50字以內），先肯定主貼文很準，再把今日運勢延伸成 MBTI 人格版的共鳴。內容必須強烈對應今日貼文。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
-        f"請根據以下主貼文內容，寫一則生活連結留言（50字以內），把今日星座運勢和大家日常經驗連起來，讓人覺得貼文真的在說自己。內容必須正確回應主貼文主題。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
-        f"請根據以下主貼文內容，寫一則超吸睛的 MBTI × 星座留言（50字以內），直接回應主貼文中的運勢重點，像個在吃瓜的朋友一樣吐槽。內容要和主貼文內容高度一致，不能空泛。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti}。請避開人身攻擊、政治、宗教敏感話題。",
-        f"請根據以下主貼文內容，寫一則帶有強烈共鳴感的自回留言（50字以內），重點是直接回應今天主貼文裡最慘/最衰的星座，讓大家覺得這篇貼文真是對號入座。主貼文內容：\n{main_text}\nMBTI 角度：{selected_mbti_pair}。請避開人身攻擊、政治、宗教敏感話題。",
-    ]
-    reply_prompt = random.choice(reply_prompts)
 
     models_to_try = ["gemini-3.8-flash", "gemini-2.0-flash"]
 
