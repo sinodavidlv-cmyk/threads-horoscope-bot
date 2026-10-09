@@ -51,7 +51,7 @@ def generate_horoscope_content():
     # 隨機自回留言切入角度
     # 讓自回留言必須「直接對應今日主貼文的星座運勢」
 
-    models_to_try = ["gemini-3.8-flash", "gemini-3.6-flash"]
+    models_to_try = ["gemini-3.5-flash", "gemini-2.5-flash"]
 
     for attempt in range(8):
         for model_name in models_to_try:
