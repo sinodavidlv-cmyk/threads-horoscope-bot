@@ -55,10 +55,10 @@ def generate_horoscope_content():
 
     for attempt in range(8):
         for model_name in models_to_try:
-        try:
-            res_main = client.models.generate_content(
-                model=model_name,
-                contents=prompt
+            try:
+                res_main = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
             )
 
             if not getattr(res_main, "text", None):
