@@ -103,8 +103,8 @@ def generate_horoscope_content():
             reply_text = res_reply.text.strip()
             return main_text, reply_text
 
-            except Exception as e:
-                print(f"⚠️ Model={model_name}, attempt={attempt + 1}, error={e}")
+        except Exception as e:
+            print(f"⚠️ Model={model_name}, attempt={attempt + 1}, error={e}")
         
         backoff = min(300, (2 ** attempt) * 15)
         print(f"⏳ 等待 {backoff} 秒後重試...")
