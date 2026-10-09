@@ -117,7 +117,7 @@ def generate_horoscope_content():
 def refresh_threads_token():
     token = os.environ.get("THREADS_ACCESS_TOKEN")
     if not token:
-    raise ValueError("❌ 找不到 THREADS_ACCESS_TOKEN 環境變數")  # ✅ 新增：驗證 token 存在
+        raise ValueError("❌ 找不到 THREADS_ACCESS_TOKEN 環境變數")  # ✅ 新增：驗證 token 存在
     url = "https://graph.threads.net/refresh_access_token"
     params = {
         "grant_type": "th_refresh_token",
@@ -136,7 +136,7 @@ def refresh_threads_token():
 def post_to_threads(text_content, reply_content):
     user_id = os.environ.get("THREADS_USER_ID")
     if not user_id:
-    raise ValueError("❌ 找不到 THREADS_USER_ID 環境變數")  # ✅ 新增：驗證 user_id 存在
+        raise ValueError("❌ 找不到 THREADS_USER_ID 環境變數")  # ✅ 新增：驗證 user_id 存在
     access_token = refresh_threads_token()
     
     # 建立主貼文容器
