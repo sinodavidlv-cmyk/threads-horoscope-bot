@@ -107,7 +107,7 @@ def generate_horoscope_content():
                 print(f"⚠️ Model={model_name}, attempt={attempt + 1}, error={e}")
                 continue
 
-        backoff = min(300, (2 ** attempt) * 15)
+        backoff = min(60, (2 ** attempt) * 5)  # 改為最多 60 秒，初始 5 秒
         print(f"⏳ 等待 {backoff} 秒後重試...")
         time.sleep(backoff)
 
@@ -116,6 +116,8 @@ def generate_horoscope_content():
 # 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
     token = os.environ.get("THREADS_ACCESS_TOKEN")
+    if not token:
+    raise ValueError("❌ 找不到 THREADS_ACCESS_TOKEN 環境變數")  # ✅ 新增：驗證 token 存在
     url = "https://graph.threads.net/refresh_access_token"
     params = {
         "grant_type": "th_refresh_token",
@@ -133,6 +135,8 @@ def refresh_threads_token():
 # 3. 發布貼文與自動自回至 Threads API
 def post_to_threads(text_content, reply_content):
     user_id = os.environ.get("THREADS_USER_ID")
+    if not user_id:
+    raise ValueError("❌ 找不到 THREADS_USER_ID 環境變數")  # ✅ 新增：驗證 user_id 存在
     access_token = refresh_threads_token()
     
     # 建立主貼文容器
