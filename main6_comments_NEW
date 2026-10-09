@@ -1,0 +1,74 @@
+# 1. 呼叫 Gemini AI 生成每日 12 星座運勢與熱門留言
+def generate_horoscope_content():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("❌ 找不到 GEMINI_API_KEY 環境變數")
+    
+    client = genai.Client(api_key=api_key)
+    tz_taiwan = timezone(timedelta(hours=8))
+    today_str = datetime.now(tz_taiwan).strftime("%m/%d")
+    
+    personas = [
+        "請使用口語化、像朋友在群組抱怨或吐槽的語氣，夾雜 1-2 個網路流行短語。排版隨性一點，不要過於死板。",
+        "請使用精簡強烈的短句風格，字數偏少（大約 200-250 字），標點符號可以簡化，營造冷冷淡淡但命中率極高的幽默感。",
+        "請使用帶有一點溫暖陪伴、偶爾吐槽的社群貼文風格，段落之間用空白行隔開，讓手機閱讀時很有呼吸感。",
+        "毒舌傲嬌系星座專家，講話一針見血但其實很準。",
+        "瘋狂迷進連發的社群小編，喜歡用網路流行語對話。",
+        "黑色幽默派的厭世導師，把運勢講得像人生災難現場但很好笑。",
+        "高情商的溫暖心靈導師，喜歡用微酸帶甜的語氣虧人。"
+    ]
+    current_persona = random.choice(personas)
+    
+    prompt = f"""
+你是一位講話精闢、語氣扎心又極具幽默感的 Threads 星座語錄專家。
+風格要求：{current_persona}
+請為 Threads 平台撰寫一則繁體中文「{today_str} 12 星座地雷與運勢地獄梗」。
+目標：極大化「轉發率（Repost）」與「留言區戰翻率」，吸引更多星座迷追蹤。文風必須完全像真人朋友在 Threads 上發廢文/抱怨，絕對拒絕 AI 罐頭文。
+
+排版與結構要求：
+1. 開頭標題：格式必須為 "{today_str}今日十二星座運勢: "，後面接一句超吸睛的犀利金句。
+2. 【焦點警示】：挑出 1~2 個今日「最慘/最欠罵」的苦主星座做重點吐槽，並附上幸運色與數字。
+3. 【12 星座精簡警示】：其餘星座以極度接地氣、毒舌且精闢的一句話列出。
+4. 【Threads 爆款互動結尾】：結尾改成一句能引發強烈共鳴或 Tag 朋友出來面對的爭議性問句。
+5. 【平台格式與字數限制】：全長控制在 420 字以內，保持文句完整。
+"""
+
+    # 鎖定單一最穩定的模型，省去多模型切換的額度浪費
+    model_name = "gemini-2.5-flash"
+
+    # 最多重試 3 次，每次失敗僅固定等待 3 秒，絕不卡死、不浪費 Credit
+    for attempt in range(3):
+        try:
+            # 1. 生成主貼文
+            res_main = client.models.generate_content(model=model_name, contents=prompt)
+            if not getattr(res_main, "text", None):
+                raise ValueError(f"Empty response from {model_name}")
+            main_text = res_main.text.replace('\n\n', '\n').strip()
+
+            # 2. 生成自回留言
+            reply_prompts = [
+                f"請根據以下主貼文內容，寫一則短小精悍（50字以內）的自回留言。內容必須直接回應「今日的星座運勢」，不能泛泛而談。語氣像個朋友在吐槽。主貼文：{main_text}",
+                f"請根據以下主貼文內容，寫一則 Threads 上熱門第一樓留言（50字以內），直接吐槽當天主貼文裡最慘的星座，並叫大家留言卡位。主貼文：{main_text}",
+                f"請根據以下主貼文內容，寫一則幽默的自回互動留言（50字以內），問大家今天是不是也跟主貼文裡某個星座一樣心情很爛。主貼文：{main_text}",
+                f"請根據以下主貼文內容，寫一則幽默共感留言（50字以內），用比喻或小笑話直接回應今日星座運勢，讓大家覺得這篇貼文真命中。主貼文：{main_text}",
+                f"請根據以下主貼文內容，寫一則開放式問答留言（50字以內），直接拋出和今日星座運勢相關的問題。主貼文：{main_text}",
+                f"請根據以下主貼文內容，寫一則讚美＋延伸留言（50字以內），先肯定主貼文很準，再把今日運勢延伸成 MBTI 人格版的共鳴。主貼文：{main_text}",
+                f"請根據以下主貼文內容，寫一則生活連結留言（50字以內），把今日星座運勢和大家日常經驗連起來。主貼文：{main_text}",
+                f"請根據以下主貼文內容，寫一則超吸睛的 MBTI × 星座留言（50字以內），直接回應主貼文中的運勢重點。主貼文：{main_text}",
+                f"請根據以下主貼文內容，寫一則帶有強烈共鳴感的自回留言（50字以內），直接回應今天主貼文裡最慘/最衰的星座。主貼文：{main_text}"
+            ]
+            reply_prompt = random.choice(reply_prompts)
+            
+            time.sleep(2)
+            res_reply = client.models.generate_content(model=model_name, contents=reply_prompt)
+            if not getattr(res_reply, "text", None):
+                raise ValueError(f"Empty reply response from {model_name}")
+            reply_text = res_reply.text.strip()
+            
+            return main_text, reply_text
+
+        except Exception as e:
+            print(f"⚠️ 嘗試 {attempt + 1} 失敗，錯誤: {e}")
+            if attempt == 2:  # 3次全失直接報錯，不無限迴圈
+                raise RuntimeError("Gemini API 多次重試後仍無法連線")
+            time.sleep(3)  # 失敗固定休息 3 秒立刻重試
