@@ -59,7 +59,7 @@ def generate_horoscope_content():
                 res_main = client.models.generate_content(
                     model=model_name,
                     contents=prompt
-            )
+                )
 
             if not getattr(res_main, "text", None):
                 raise ValueError(f"Empty response from {model_name}")
