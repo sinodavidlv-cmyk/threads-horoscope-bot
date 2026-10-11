@@ -229,17 +229,55 @@ def post_to_threads(text_content, reply_content):
         "access_token": access_token
     }
     
-    reply_res = requests.post(create_url, data=reply_container_payload, timeout=15).json()
-    reply_creation_id = reply_res.get("id")
-    
+    reply_res = requests.post(create_url, data=reply_container_payload, timeout=15)
+    try:
+        reply_data = reply_res.json()
+    except ValueError:
+        print("⚠️ 建立回覆容器時，回應不是 JSON:", reply_res.text)
+        return False
+
+    if reply_res.status_code != 200:
+        print("❌ 建立回覆容器失敗，HTTP 狀態碼:", reply_res.status_code)
+        print(reply_data)
+        return False
+
+    if "error" in reply_data:
+        print("❌ 建立回覆容器失敗，API 回傳錯誤:", reply_data)
+        return False
+
+    reply_creation_id = reply_data.get("id")
+
     if reply_creation_id:
         time.sleep(5)
-        pub_reply_res = requests.post(publish_url,data={"creation_id": reply_creation_id, "access_token": access_token},timeout=30).json()
-        if pub_reply_res.get("id"):
-            print(f"🔥 成功自動在第一樓留言！Reply ID: {pub_reply_res.get('id')}")
+
+        pub_reply_res = requests.post(
+            publish_url,
+            data={"creation_id": reply_creation_id, "access_token": access_token},
+            timeout=30
+        )
+
+        try:
+            pub_reply_data = pub_reply_res.json()
+        except ValueError:
+            print("⚠️ 發布回覆留言時，回應不是 JSON:", pub_reply_res.text)
+            return False
+
+        if pub_reply_res.status_code != 200:
+            print("❌ 發布回覆留言失敗，HTTP 狀態碼:", pub_reply_res.status_code)
+            print(pub_reply_data)
+            return False
+
+        if "error" in pub_reply_data:
+            print("❌ 發布回覆留言失敗，API 回傳錯誤:", pub_reply_data)
+            return False
+
+        if pub_reply_data.get("id"):
+            print(f"🔥 成功自動在第一樓留言！Reply ID: {pub_reply_data.get('id')}")
         else:
-            print("⚠️ 留言發布失敗:", pub_reply_res)
-            
+            print("⚠️ 留言發布失敗:", pub_reply_data)
+    else:
+        print("❌ 建立回覆容器失敗，沒有回傳 id:", reply_data)
+
     return True
 
 if __name__ == "__main__":
