@@ -194,11 +194,26 @@ def post_to_threads(text_content, reply_content):
         "access_token": access_token
     }
     
-    pub_res = requests.post(publish_url, data=pub_payload, timeout=30).json()
-    published_id = pub_res.get("id")
-    
+    pub_res = requests.post(publish_url, data=pub_payload, timeout=30)
+    try:
+        pub_data = pub_res.json()
+    except ValueError:
+        print("⚠️ 發布主貼文時，回應不是 JSON:", pub_res.text)
+        return False
+
+    if pub_res.status_code != 200:
+        print("❌ 發布主貼文失敗，HTTP 狀態碼:", pub_res.status_code)
+        print(pub_data)
+        return False
+
+    if "error" in pub_data:
+        print("❌ 發布主貼文失敗，API 回傳錯誤:", pub_data)
+        return False
+
+    published_id = pub_data.get("id")
+
     if not published_id:
-        print("❌ 發布主貼文失敗:", pub_res)
+        print("❌ 發布主貼文失敗:", pub_data)
         return False
 
     print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
