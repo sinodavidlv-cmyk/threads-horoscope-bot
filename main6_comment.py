@@ -106,6 +106,10 @@ def generate_horoscope_content():
 
                 if not getattr(res_reply, "text", None):
                     raise ValueError(f"Empty reply response from {model_name}")
+                if not main_text or len(main_text.strip()) < 20:
+                    raise ValueError(f"主貼文內容太短或空白：{main_text!r}")
+                if not reply_text or len(reply_text.strip()) < 3:
+                    raise ValueError(f"回覆內容太短或空白：{reply_text!r}")
 
                 reply_text = res_reply.text.strip()
                 
