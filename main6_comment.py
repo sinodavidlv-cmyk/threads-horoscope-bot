@@ -161,11 +161,26 @@ def post_to_threads(text_content, reply_content):
         "access_token": access_token
     }
     
-    res = requests.post(create_url, data=payload, timeout=15).json()
-    creation_id = res.get("id")
-    
+    res = requests.post(create_url, data=payload, timeout=15)
+    try:
+        data = res.json()
+    except ValueError:
+        print("⚠️ 建立主貼文容器時，回應不是 JSON:", res.text)
+        return False
+
+    if res.status_code != 200:
+        print("❌ 建立 Threads 貼文容器失敗，HTTP 狀態碼:", res.status_code)
+        print(data)
+        return False
+
+    if "error" in data:
+        print("❌ 建立 Threads 貼文容器失敗，API 回傳錯誤:", data)
+        return False
+
+    creation_id = data.get("id")
+
     if not creation_id:
-        print("❌ 建立 Threads 貼文容器失敗:", res)
+        print("❌ 建立 Threads 貼文容器失敗:", data)
         return False
         
     print(f"✅ 主貼文容器建立成功! Container ID: {creation_id}")
