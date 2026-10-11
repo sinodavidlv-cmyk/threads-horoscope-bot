@@ -190,8 +190,7 @@ def post_to_threads(text_content, reply_content):
     
     if reply_creation_id:
         time.sleep(5)
-        pub_reply_res = requests.post(publish_url, data={"creation_id": reply_creation_id, "access_token": access_token}).json()
-        if pub_reply_res.get("id"):
+        pub_reply_res = requests.post(publish_url, data={"creation_id": reply_creation_id, "access_token": access_token}, timeout=30).json()        if pub_reply_res.get("id"):
             print(f"🔥 成功自動在第一樓留言！Reply ID: {pub_reply_res.get('id')}")
         else:
             print("⚠️ 留言發布失敗:", pub_reply_res)
