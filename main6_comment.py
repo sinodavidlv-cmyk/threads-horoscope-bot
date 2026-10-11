@@ -65,6 +65,13 @@ def generate_horoscope_content():
                     raise ValueError(f"Empty response from {model_name}")
 
                 main_text = res_main.text.replace('\n\n', '\n').strip()
+                
+                # ✅ 新增：檢查主貼文長度
+                if not main_text or len(main_text.strip()) < 20:
+                    raise ValueError(f"❌ 主貼文內容太短或空白：{main_text!r}")
+                
+                if len(main_text) > 420:
+                    raise ValueError(f"❌ 主貼文超過 420 字，目前長度：{len(main_text)}")
 
                 # 先產生 main_text，再根據它生成 reply_prompts
                 mbti_types = [
