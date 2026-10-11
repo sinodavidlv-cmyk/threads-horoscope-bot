@@ -117,19 +117,33 @@ def generate_horoscope_content():
 def refresh_threads_token():
     token = os.environ.get("THREADS_ACCESS_TOKEN")
     if not token:
-        raise ValueError("❌ 找不到 THREADS_ACCESS_TOKEN 環境變數")  # ✅ 新增：驗證 token 存在
+        raise ValueError("❌ 找不到 THREADS_ACCESS_TOKEN 環境變數")
+
     url = "https://graph.threads.net/refresh_access_token"
     params = {
         "grant_type": "th_refresh_token",
         "access_token": token
     }
+
     try:
-        res = requests.get(url, params=params, timeout=15).json()
-        if "access_token" in res:
+        res = requests.get(url, params=params, timeout=15)
+        if res.status_code != 200:
+            print("⚠️ Threads token refresh 失敗，HTTP 狀態碼:", res.status_code)
+            print(res.text)
+            return token
+
+        data = res.json()
+        if "error" in data:
+            print("⚠️ Threads token refresh 回傳錯誤:", data)
+            return token
+
+        if "access_token" in data:
             print("🔄 成功刷新 Threads 長效 Token！")
-            return res["access_token"]
+            return data["access_token"]
+
     except Exception as e:
         print(f"⚠️ Token 刷新提示: {e}")
+
     return token
 
 # 3. 發布貼文與自動自回至 Threads API
@@ -190,7 +204,8 @@ def post_to_threads(text_content, reply_content):
     
     if reply_creation_id:
         time.sleep(5)
-        pub_reply_res = requests.post(publish_url, data={"creation_id": reply_creation_id, "access_token": access_token}, timeout=30).json()        if pub_reply_res.get("id"):
+        pub_reply_res = requests.post(publish_url,data={"creation_id": reply_creation_id, "access_token": access_token},timeout=30).json()
+        if pub_reply_res.get("id"):
             print(f"🔥 成功自動在第一樓留言！Reply ID: {pub_reply_res.get('id')}")
         else:
             print("⚠️ 留言發布失敗:", pub_reply_res)
