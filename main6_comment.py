@@ -108,6 +108,14 @@ def generate_horoscope_content():
                     raise ValueError(f"Empty reply response from {model_name}")
 
                 reply_text = res_reply.text.strip()
+                
+                # ✅ 新增：檢查回覆留言長度
+                if not reply_text or len(reply_text.strip()) < 3:
+                    raise ValueError(f"❌ 回覆內容太短或空白：{reply_text!r}")
+                
+                if len(reply_text) > 50:
+                    raise ValueError(f"❌ 回覆留言超過 50 字，目前長度：{len(reply_text)}")
+                
                 return main_text, reply_text
 
             except Exception as e:
