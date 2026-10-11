@@ -80,8 +80,6 @@ def generate_horoscope_content():
                     "ISTJ", "ISFJ", "ESTJ", "ESFJ",
                     "ISTP", "ISFP", "ESTP", "ESFP"
                 ]
-                selected_mbti = random.choice(mbti_types)
-                selected_mbti_pair = random.choice([m for m in mbti_types if m != selected_mbti])
 
                 reply_prompts = [
                     f"請根據以下主貼文內容，寫一則短小精悍（50字以內）的自回留言。內容必須直接回應「今日的星座運勢」，不能泛泛而談。語氣像個常客。主貼文：{main_text}",
