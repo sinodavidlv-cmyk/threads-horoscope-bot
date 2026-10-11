@@ -104,11 +104,11 @@ def generate_horoscope_content():
                 return main_text, reply_text
 
             except Exception as e:
-                print(f"⚠️ Model={model_name}, attempt={attempt + 1}, error={e}")
+                print(f" Model={model_name}, attempt={attempt + 1}, error={e}")
                 continue
 
         backoff = min(60, (2 ** attempt) * 5)  # 改為最多 60 秒，初始 5 秒
-        print(f"⏳ 等待 {backoff} 秒後重試...")
+        print(f" 等待 {backoff} 秒後重試...")
         time.sleep(backoff)
 
     raise RuntimeError("Gemini API remained unavailable after retries")
@@ -128,21 +128,21 @@ def refresh_threads_token():
     try:
         res = requests.get(url, params=params, timeout=15)
         if res.status_code != 200:
-            print("⚠️ Threads token refresh 失敗，HTTP 狀態碼:", res.status_code)
+            print(" Threads token refresh 失敗，HTTP 狀態碼:", res.status_code)
             print(res.text)
             return token
 
         data = res.json()
         if "error" in data:
-            print("⚠️ Threads token refresh 回傳錯誤:", data)
+            print(" Threads token refresh 回傳錯誤:", data)
             return token
 
         if "access_token" in data:
-            print("🔄 成功刷新 Threads 長效 Token！")
+            print(" 成功刷新 Threads 長效 Token！")
             return data["access_token"]
 
     except Exception as e:
-        print(f"⚠️ Token 刷新提示: {e}")
+        print(f" Token 刷新提示: {e}")
 
     return token
 
@@ -165,7 +165,7 @@ def post_to_threads(text_content, reply_content):
     try:
         data = res.json()
     except ValueError:
-        print("⚠️ 建立主貼文容器時，回應不是 JSON:", res.text)
+        print(" 建立主貼文容器時，回應不是 JSON:", res.text)
         return False
 
     if res.status_code != 200:
@@ -183,8 +183,8 @@ def post_to_threads(text_content, reply_content):
         print("❌ 建立 Threads 貼文容器失敗:", data)
         return False
         
-    print(f"✅ 主貼文容器建立成功! Container ID: {creation_id}")
-    print("⏳ 等待 Meta 後端同步資料 (10秒)...")
+    print(f" 主貼文容器建立成功! Container ID: {creation_id}")
+    print(" 等待 Meta 後端同步資料 (10秒)...")
     time.sleep(10)
 
     # 發布主貼文
@@ -198,7 +198,7 @@ def post_to_threads(text_content, reply_content):
     try:
         pub_data = pub_res.json()
     except ValueError:
-        print("⚠️ 發布主貼文時，回應不是 JSON:", pub_res.text)
+        print(" 發布主貼文時，回應不是 JSON:", pub_res.text)
         return False
 
     if pub_res.status_code != 200:
@@ -216,10 +216,10 @@ def post_to_threads(text_content, reply_content):
         print("❌ 發布主貼文失敗:", pub_data)
         return False
 
-    print(f"🎉 成功自動發布貼文至 Threads! Post ID: {published_id}")
+    print(f" 成功自動發布貼文至 Threads! Post ID: {published_id}")
     
     # 自動發布第一條留言
-    print("💬 開始自動發布第一樓留言...")
+    print(" 開始自動發布第一樓留言...")
     time.sleep(5)
     
     reply_container_payload = {
@@ -233,7 +233,7 @@ def post_to_threads(text_content, reply_content):
     try:
         reply_data = reply_res.json()
     except ValueError:
-        print("⚠️ 建立回覆容器時，回應不是 JSON:", reply_res.text)
+        print(" 建立回覆容器時，回應不是 JSON:", reply_res.text)
         return False
 
     if reply_res.status_code != 200:
@@ -259,7 +259,7 @@ def post_to_threads(text_content, reply_content):
         try:
             pub_reply_data = pub_reply_res.json()
         except ValueError:
-            print("⚠️ 發布回覆留言時，回應不是 JSON:", pub_reply_res.text)
+            print(" 發布回覆留言時，回應不是 JSON:", pub_reply_res.text)
             return False
 
         if pub_reply_res.status_code != 200:
@@ -272,9 +272,9 @@ def post_to_threads(text_content, reply_content):
             return False
 
         if pub_reply_data.get("id"):
-            print(f"🔥 成功自動在第一樓留言！Reply ID: {pub_reply_data.get('id')}")
+            print(f" 成功自動在第一樓留言！Reply ID: {pub_reply_data.get('id')}")
         else:
-            print("⚠️ 留言發布失敗:", pub_reply_data)
+            print(" 留言發布失敗:", pub_reply_data)
     else:
         print("❌ 建立回覆容器失敗，沒有回傳 id:", reply_data)
 
@@ -286,11 +286,11 @@ if __name__ == "__main__":
     import time
     
     delay_seconds = random.randint(0, 180)
-    print(f"⏳ [排程隱匿] 隨機延遲等待 {delay_seconds} 秒後開始執行...", flush=True)
+    print(f" [排程隱匿] 隨機延遲等待 {delay_seconds} 秒後開始執行...", flush=True)
     time.sleep(delay_seconds)
     
-    print("🔮 [測試版本] 開始生成今日星座貼文與熱門留言...")
+    print(" [測試版本] 開始生成今日星座貼文與熱門留言...")
     content, reply_comment = generate_horoscope_content()
-    print("📝 生成貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
-    print(f"💬 自回留言預覽：{reply_comment}")
+    print(" 生成貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
+    print(f" 自回留言預覽：{reply_comment}")
     post_to_threads(content, reply_comment)
