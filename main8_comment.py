@@ -3,6 +3,38 @@ import time
 import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
+import re
+
+MAX_LEN = 500
+RETRY_CODES = {429, 500, 502, 503, 504}
+# 模型清單,逗號分隔;沒設環境變數就用你目前正在用的兩個
+MODELS = [m.strip() for m in os.environ.get(
+    "GEMINI_MODELS", "gemini-3.8-flash,gemini-3.6-flash").split(",") if m.strip()]
+
+
+def gen_text(client, prompt, models, tries=3):
+    errs = []
+    for model in models:
+        for attempt in range(tries):
+            try:
+                res = client.models.generate_content(model=model, contents=prompt)
+                text = (res.text or "").strip()
+                if text:
+                    print(f"✅ 使用模型 {model}")
+                    return text
+                errs.append(f"{model}:空回應")
+                break                                   # 空回應就換下一個模型
+            except Exception as e:
+                m = re.match(r"\s*(\d{3})", str(e))     # 錯誤訊息開頭是狀態碼,如「503 UNAVAILABLE」
+                code = getattr(e, "code", None) or (int(m.group(1)) if m else None)
+                print(f"⚠️ {model} 第 {attempt+1}/{tries} 次失敗:{str(e)[:150]}")
+                errs.append(f"{model}:{code}")
+                if code is not None and code not in RETRY_CODES:
+                    break                               # 401/403/404 重試沒用,直接換模型
+                if attempt < tries - 1:
+                    time.sleep(30 * (attempt + 1))      # 30 秒、60 秒
+    raise RuntimeError(f"所有模型都失敗:{errs}")
+
 
 # 1. 呼叫 Gemini AI 生成每日 12 生肖運勢_
 def generate_horoscope_content():
@@ -41,27 +73,21 @@ def generate_horoscope_content():
 2. 強烈引導讀者 Tag 朋友或留言（例如：「@你身邊生肖是羊的朋友」、「覺得準的留言1」）。
 3. 不要寫任何標題，直接輸出留言文字即可。
 """
+    main_text = None
+    for attempt in range(1, 4):
+        text = gen_text(client, prompt, MODELS).replace('\n\n', '\n').strip()
+        if len(text) <= MAX_LEN:
+            main_text = text
+            break
+        print(f"⚠️ 第 {attempt} 次主文 {len(text)} 字,超過 {MAX_LEN},重新生成")
+        time.sleep(15)
+    if main_text is None:
+        raise RuntimeError(f"主文連續超過 {MAX_LEN} 字")
 
-    for attempt in range(3):
-        try:
-            res_main = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=prompt
-            )
-            res_reply = client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=reply_prompt
-            )
-            
-            main_text = res_main.text.replace('\n\n', '\n').strip()
-            reply_text = res_reply.text.strip()
-            
-            return main_text, reply_text
-        except Exception as e:
-            if attempt == 2:
-                raise e
-            time.sleep(10)
-
+    time.sleep(10)   # 兩次呼叫之間留間隔
+    reply_text = gen_text(client, reply_prompt, MODELS[::-1]).strip()
+    return main_text, reply_text
+    
 # 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
     token = os.environ.get("THREADS_ACCESS_TOKEN")
@@ -71,7 +97,7 @@ def refresh_threads_token():
         "access_token": token
     }
     try:
-        res = requests.get(url, params=params).json()
+        res = requests.get(url, params=params, timeout=30).json()
         if "access_token" in res:
             print("🔄 成功刷新 Threads 長效 Token！")
             return res["access_token"]
@@ -135,7 +161,7 @@ def post_to_threads(text_content, reply_content):
     
     if reply_creation_id:
         time.sleep(5)
-        pub_reply_res = requests.post(publish_url, data={"creation_id": reply_creation_id, "access_token": access_token}).json()
+        pub_reply_res = requests.post(publish_url, data={"creation_id": reply_creation_id, "access_token": access_token}, timeout=30).json()
         if pub_reply_res.get("id"):
             print(f"🔥 成功自動在第一樓留言！Reply ID: {pub_reply_res.get('id')}")
         else:
@@ -148,4 +174,8 @@ if __name__ == "__main__":
     content, reply_comment = generate_horoscope_content()
     print("📝 生成貼文預覽：\n" + "-"*30 + f"\n{content}\n" + "-"*30)
     print(f"💬 自回留言預覽：{reply_comment}")
-    post_to_threads(content, reply_comment)
+    if os.environ.get("DRY_RUN") == "1":
+        print("DRY_RUN=1,不發送")
+        raise SystemExit(0)
+    if not post_to_threads(content, reply_comment):
+        raise SystemExit(1)
