@@ -8,8 +8,8 @@ import re
 MAX_LEN = 500
 RETRY_CODES = {429, 500, 502, 503, 504}
 # 模型清單,逗號分隔;沒設環境變數就用你目前正在用的兩個
-MODELS = [m.strip() for m in os.environ.get(
-    "GEMINI_MODELS", "gemini-3.8-flash,gemini-3.6-flash").split(",") if m.strip()]
+MODELS = [m.strip() for m in (os.environ.get("GEMINI_MODELS") or
+          "gemini-3.8-flash,gemini-3.6-flash").split(",") if m.strip()]
 
 
 def gen_text(client, prompt, models, tries=3):
@@ -156,9 +156,8 @@ def post_to_threads(text_content, reply_content):
         "access_token": access_token
     }
     
-    reply_res = requests.post(create_url, data=reply_container_payload).json()
+    reply_res = requests.post(create_url, data=reply_container_payload, timeout=30).json()    
     reply_creation_id = reply_res.get("id")
-    
     if reply_creation_id:
         time.sleep(5)
         pub_reply_res = requests.post(publish_url, data={"creation_id": reply_creation_id, "access_token": access_token}, timeout=30).json()
