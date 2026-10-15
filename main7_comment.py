@@ -72,29 +72,25 @@ def generate_horoscope_content():
 1. 拒絕 AI 罐頭感：嚴禁使用「今天」、「各位」、「真的」、「笑死」等機器人開頭或贅字，要像真人打字一樣口語、隨性。
 2. 毒舌吐槽：必須針對某個星座開砲、掀底牌或製造輕微的爭議與對立。
 3. 強烈互動鉤子：結尾必須自然地引導讀者標記朋友或留言自首（例如：「@身邊那個死不認錯的雙子」或「留言區開放受害者報數👇」）。
-#4. 結尾【必須】原封不動加上這段推廣文字與網址（一個字都不能少）：
-  # 最近想幫自己補磁場的可以參考 👉 {current_product['name']}：{current_product['url']}
+
 """
 
-    for attempt in range(3):
+    main_text, reply_text = None, None
+    for attempt in range(6):
+        model = "gemini-3.6-flash" if attempt < 3 else "gemini-2.5-flash"
         try:
-            res_main = client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=prompt
-            )
-            res_reply = client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=reply_prompt
-            )
-            
-            main_text = res_main.text.replace('\n\n', '\n').strip()
-            reply_text = res_reply.text.strip()
-            
+            if main_text is None:
+                res_main = client.models.generate_content(model=model, contents=prompt)
+                main_text = res_main.text.replace('\n\n', '\n').strip()
+            if reply_text is None:
+                res_reply = client.models.generate_content(model=model, contents=reply_prompt)
+                reply_text = res_reply.text.strip()
             return main_text, reply_text
         except Exception as e:
-            if attempt == 2:
+            print(f"⚠️ 第 {attempt+1} 次失敗({model}): {e}")
+            if attempt == 5:
                 raise e
-            time.sleep(10)
+            time.sleep(10 * (attempt + 1))
 
 # 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
