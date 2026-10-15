@@ -40,25 +40,22 @@ def generate_horoscope_content():
 3. 不要寫任何標題，直接輸出留言文字即可。
 """
 
-    for attempt in range(3):
+    main_text, reply_text = None, None
+    for attempt in range(6):
+        model = "gemini-3.8-flash" if attempt < 3 else "gemini-3.6-flash"
         try:
-            res_main = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=prompt
-            )
-            res_reply = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=reply_prompt
-            )
-            
-            main_text = res_main.text.replace('\n\n', '\n').strip()
-            reply_text = res_reply.text.strip()
-            
+            if main_text is None:
+                res_main = client.models.generate_content(model=model, contents=prompt)
+                main_text = res_main.text.replace('\n\n', '\n').strip()
+            if reply_text is None:
+                res_reply = client.models.generate_content(model=model, contents=reply_prompt)
+                reply_text = res_reply.text.strip()
             return main_text, reply_text
         except Exception as e:
-            if attempt == 2:
+            print(f"⚠️ 第 {attempt+1} 次失敗({model}): {e}")
+            if attempt == 5:
                 raise e
-            time.sleep(10)
+            time.sleep(10 * (attempt + 1))
 
 # 2. 自動刷新 Threads Long-Lived Token
 def refresh_threads_token():
