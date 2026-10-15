@@ -4,20 +4,16 @@ import requests
 from datetime import datetime, timezone, timedelta
 from google import genai
 
-# 1. 呼叫 Gemini AI 生成每日 12 生肖運勢_
+# 1. 呼叫 Mistral AI 生成每日 12 生肖運勢（使用 REST API）
 def generate_horoscope_content():
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = os.environ.get("MISTRAL_API_KEY")
     if not api_key:
-        raise ValueError("❌ 找不到 GEMINI_API_KEY 環境變數")
+        raise ValueError("❌ 找不到 MISTRAL_API_KEY 環境變數")
 
-    client = genai.Client(api_key=api_key)
-
-    # 1. 先計算台灣時間 (UTC+8) 的當日日期
+    # 計算台灣時間 (UTC+8) 的當日日期
     tz_taiwan = timezone(timedelta(hours=8))
     today_str = datetime.now(tz_taiwan).strftime("%m/%d")
 
-    # 2. 將 prompt 改為 f-string (注意 prompt = f""" 的小寫 f)
-    # 並直接把 {today_str} 帶入 Prompt 內
     prompt = f"""
 {today_str}今日十二生肖運勢:
 你是一位風格活潑、精通中西星象的語錄型專家。
@@ -32,7 +28,6 @@ def generate_horoscope_content():
 6. 全部字數，包括符號、特殊字元都必須嚴格控制在 450 字內，排版適合手機閱讀。
 """
 
-    # 自回留言 Prompt
     reply_prompt = f"""
 你是一位講話犀利、喜歡吐槽的 Threads 網友。
 請針對今天的生肖運勢，寫一則短小精悍（50字以內）的自回留言，用來吸引讀者留言互動。
@@ -42,20 +37,58 @@ def generate_horoscope_content():
 3. 不要寫任何標題，直接輸出留言文字即可。
 """
 
+    url = "https://api.mistral.ai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    # model 可依你的帳號權限與需求調整
+    model = "mistral-medium-latest"
+
     for attempt in range(3):
         try:
-            res_main = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=prompt
-            )
-            res_reply = client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=reply_prompt
-            )
-            
-            main_text = res_main.text.replace('\n\n', '\n').strip()
-            reply_text = res_reply.text.strip()
-            
+            # 主文
+            payload_main = {
+                "model": model,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                # 可視需要設定 max_tokens, temperature 等
+                "temperature": 0.8,
+                "max_tokens": 800
+            }
+            r_main = requests.post(url, json=payload_main, headers=headers, timeout=30)
+            r_main.raise_for_status()
+            data_main = r_main.json()
+
+            # 回文
+            payload_reply = {
+                "model": model,
+                "messages": [
+                    {"role": "user", "content": reply_prompt}
+                ],
+                "temperature": 0.9,
+                "max_tokens": 200
+            }
+            r_reply = requests.post(url, json=payload_reply, headers=headers, timeout=30)
+            r_reply.raise_for_status()
+            data_reply = r_reply.json()
+
+            # 解析回傳（兼容常見 response schema）
+            def extract_text(resp_json):
+                # 常見：choices[0].message.content
+                try:
+                    return resp_json["choices"][0]["message"]["content"].strip()
+                except Exception:
+                    # 若不同結構，嘗試更多字段
+                    try:
+                        return resp_json["choices"][0]["text"].strip()
+                    except Exception:
+                        return ""
+
+            main_text = extract_text(data_main).replace('\n\n', '\n').strip()
+            reply_text = extract_text(data_reply).strip()
+
             return main_text, reply_text
         except Exception as e:
             if attempt == 2:
