@@ -7,7 +7,7 @@ from google.genai import types
 from datetime import datetime, timezone, timedelta
 
 # 模型可用環境變數 GEMINI_MODEL 覆寫，不改程式碼就能換（預設沿用你原本的設定）
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 MAX_POST_CHARS = 400      # 你的 prompt 規定的上限
 THREADS_LIMIT = 450       # Threads 單則文字硬上限
 
@@ -86,7 +86,7 @@ def generate_news_content():
  
 【重要規則】
  
-1. 總字數控制200字內
+1. 總字數控制400字內
 2. 使用自然口語
 3. 不要說教
 4. 不要寫「歡迎留言」
