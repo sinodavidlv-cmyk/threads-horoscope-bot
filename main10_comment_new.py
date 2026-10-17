@@ -2,12 +2,13 @@ import os
 import re
 import time
 import requests
+import xml.etree.ElementTree as ET   # ← 新增這行
 from google import genai
 from google.genai import types
 from datetime import datetime, timezone, timedelta
 
 # 模型可用環境變數 GEMINI_MODEL 覆寫，不改程式碼就能換（預設沿用你原本的設定）
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 MAX_POST_CHARS = 400      # 你的 prompt 規定的上限
 THREADS_LIMIT = 450       # Threads 單則文字硬上限
 
@@ -33,7 +34,20 @@ def _extract(tag, text):
     if not m:
         raise ValueError(f"模型輸出缺少 <{tag}> 標籤：{text[:100]}")
     return m.group(1).strip()
-
+    
+def fetch_headlines(n=15):
+    """抓 Google News 台灣版頭條標題（免費、不需要 API key）。"""
+    url = "https://news.google.com/rss?hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+    r.raise_for_status()
+    titles = []
+    for item in ET.fromstring(r.content).findall(".//item")[:n]:
+        t = (item.findtext("title") or "").rsplit(" - ", 1)[0].strip()
+        if t:
+            titles.append(f"- {t}")
+    if not titles:
+        raise ValueError("RSS 沒抓到任何標題")
+    return "\n".join(titles)
 
 # 1. 呼叫 Gemini 生成每日新聞
 def generate_news_content():
@@ -46,14 +60,17 @@ def generate_news_content():
     # 台灣時間 (UTC+8) 的今天日期（原本算了 today_str 但從沒放進 prompt）
     tz_taiwan = timezone(timedelta(hours=8))
     today_full = datetime.now(tz_taiwan).strftime("%Y年%m月%d日")
+    headlines = fetch_headlines()
 
     prompt = f"""
 今天是 {today_full}（台灣時間）。
 你是一位非常懂 Threads 演算法與社群互動的編輯。
-請先使用 Google 搜尋，查詢今天或最近 24 小時內的重要新聞，
-再從搜尋結果中挑選「最容易引發一般人討論」的一則新聞。
-貼文內容只能根據你實際搜尋到的內容撰寫，不得憑記憶或想像補充細節；
-如果找不到能確認的事實，就換一則新聞。
+以下是今天的新聞標題清單：
+{headlines}
+
+請從中挑選「最容易引發一般人討論」的一則新聞。
+貼文內容只能根據標題中明確寫出的資訊撰寫，不得憑記憶或想像補充細節；
+如果標題資訊不足以確認事實，就換一則。
 
 【絕對禁忌：主題多樣化過濾機制】
 1. 絕對禁止連續兩天挑選同性質的主題（例如：遠距辦公 WFH、房市買房、薪水通膨、AI 取代工作）。如果昨天的主題是職場工作模式，今天必須強制切換到「科技奇觀、生活冷知識、社會奇聞、國際趣聞、環保消費、娛樂文化」等完全不同的領域。
@@ -117,7 +134,7 @@ A. 房價跌20%
 B. 薪水漲20%
 你選哪一個？
 
-以上全部字數（含標點符號、Emoji、特殊字元）必須嚴格控制在 450 字以內。
+以上全部字數（含標點符號、Emoji、特殊字元）必須嚴格控制在 400 字以內。
 
 【最終輸出方式】
 搜尋與思考過程不要輸出。最後只輸出貼文本身，並用 <post> 與 </post> 標籤包住，標籤外不要有任何文字。
@@ -125,7 +142,7 @@ B. 薪水漲20%
 
     for attempt in range(3):
         try:
-            raw_main = _ask(client, prompt, use_search=True)
+            raw_main = _ask(client, prompt, use_search=False)
             main_text = _extract("post", raw_main).replace("\n\n", "\n").strip()
 
             if len(main_text) > MAX_POST_CHARS:
