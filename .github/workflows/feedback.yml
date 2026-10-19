@@ -1,0 +1,37 @@
+name: feedback-loop
+on:
+  schedule:
+    - cron: "17 20 * * *"        # UTC 20:17 = 台灣 04:17,避開發文時段
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "backfill(一次性補歷史)或 snapshot"
+        default: "snapshot"
+permissions:
+  contents: write
+jobs:
+  feedback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install requests
+      - name: 收成效快照(首次請手動跑 mode=backfill)
+        env:
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+        run: python feedback/collect_insights.py "${{ github.event.inputs.mode || 'snapshot' }}"
+      - name: 每週日重算配額與報告
+        run: |
+          if [ "$(date -u +%u)" = "7" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python feedback/update_arms.py
+          fi
+      - name: 提交資料
+        run: |
+          git config user.name "threads-feedback-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data reports || true
+          git diff --cached --quiet && exit 0
+          git commit -m "feedback: update data"
+          for i in 1 2 3; do git pull --rebase && git push && break || sleep 5; done
