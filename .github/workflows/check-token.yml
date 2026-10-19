@@ -1,0 +1,18 @@
+name: check-token
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢查 Threads token
+        env:
+          T: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          U: ${{ secrets.THREADS_USER_ID }}
+        run: |
+          echo "== 1. 讀自己的貼文清單 =="
+          curl -s -o r1.json -w "HTTP %{http_code}\n" "https://graph.threads.net/v1.0/$U/threads?fields=id,text,timestamp&limit=1&access_token=$T"
+          cat r1.json; echo
+          ID=$(python3 -c "import json;print(json.load(open('r1.json'))['data'][0]['id'])" 2>/dev/null)
+          echo "取到的貼文 id: $ID"
+          echo "== 2. 讀這篇貼文的成效 =="
+          curl -s -w "\nHTTP %{http_code}\n" "https://graph.threads.net/v1.0/$ID/insights?metric=views,likes,replies,reposts,quotes&access_token=$T"
