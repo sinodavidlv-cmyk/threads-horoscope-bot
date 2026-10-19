@@ -85,13 +85,13 @@ def backfill(token, user_id, days=100):
     print(f"✅ backfill 新增 {added} 篇")
 
 
-def snapshot(token):
+def snapshot(token, max_age_days=MAX_AGE_DAYS):
     done = {(i["post_id"], i["bucket"]) for i in read_insights()}
     now = datetime.now(timezone.utc)
     n = 0
     for p in read_posts():
         age_h = (now - parse_ts(p["ts"])).total_seconds() / 3600
-        if age_h > MAX_AGE_DAYS * 24:
+        if max_age_days and age_h > max_age_days * 24:
             continue
         bucket = next((b for b in BUCKETS if age_h >= b and (p["post_id"], b) not in done), None)
         if bucket is None:
@@ -111,6 +111,6 @@ if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "snapshot"
     if mode == "backfill":
         backfill(token, os.environ["THREADS_USER_ID"])
-        snapshot(token)
+        snapshot(token, max_age_days=None)   # 歷史貼文不限天數,一律補抓
     else:
         snapshot(token)
