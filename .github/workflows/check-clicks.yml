@@ -1,0 +1,45 @@
+name: check-clicks
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 查過去 13 週的連結點擊
+        env:
+          T: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          U: ${{ secrets.THREADS_USER_ID }}
+        run: |
+          python3 - <<'PY'
+          import os, json, urllib.request, urllib.parse, urllib.error
+          from datetime import datetime, timedelta, timezone
+          T, U = os.environ["T"], os.environ["U"]
+          tz8 = timezone(timedelta(hours=8))
+          end = datetime.now(tz8).replace(hour=0, minute=0, second=0, microsecond=0)
+          tot = {}
+          for w in range(13):
+              until = end - timedelta(days=7 * w)
+              since = until - timedelta(days=7)
+              q = urllib.parse.urlencode({"metric": "clicks", "since": int(since.timestamp()),
+                                          "until": int(until.timestamp()), "access_token": T})
+              try:
+                  d = json.load(urllib.request.urlopen(
+                      f"https://graph.threads.net/v1.0/{U}/threads_insights?{q}", timeout=30))
+              except urllib.error.HTTPError as e:
+                  print(since.date(), "ERR", e.code, e.read()[:200])
+                  continue
+              except Exception as e:
+                  print(since.date(), "ERR", e)
+                  continue
+              items = [i for m in d.get("data", []) for i in (m.get("link_total_values") or [])]
+              s = sum(i.get("value", 0) for i in items)
+              print(f"{since.date()} ~ {until.date()}: 總點擊 {s}")
+              for i in items:
+                  v = i.get("value", 0)
+                  tot[i["link_url"]] = tot.get(i["link_url"], 0) + v
+                  if v:
+                      print("    ", v, i["link_url"][:70])
+          print("== 13 週合計(依網址,由多到少)==")
+          for u, v in sorted(tot.items(), key=lambda kv: -kv[1]):
+              print(v, u[:90])
+          print("== 全部連結總點擊:", sum(tot.values()))
+          PY
