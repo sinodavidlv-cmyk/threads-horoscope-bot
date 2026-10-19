@@ -171,6 +171,43 @@ def extra_sections(rows, by_series):
     return out
 
 
+def account_section():
+    """帳號層級:追蹤人數每日走勢與連結點擊。資料來自 collect_insights 每天存的 data/account/。"""
+    rows = []
+    d = DATA / "account"
+    if d.exists():
+        for f in sorted(d.glob("*.json")):
+            try:
+                rows.append(json.loads(f.read_text(encoding="utf-8")))
+            except json.JSONDecodeError:
+                pass
+    out = ["", "## 帳號層級(追蹤人數、連結點擊)", ""]
+    if not rows:
+        return out + ["尚無帳號快照(需要 collect_insights 每天跑,從有這個功能那天開始累積)。"]
+    out += ["| 日期 | 追蹤人數 | 較前一筆 |", "|---|---|---|"]
+    prev = None
+    for r in rows[-21:]:
+        fc = r.get("followers_count")
+        delta = "" if (prev is None or fc is None) else f"{fc - prev:+d}"
+        out.append(f"| {r['date']} | {fc} | {delta} |")
+        if fc is not None:
+            prev = fc
+    fcs = [r["followers_count"] for r in rows if r.get("followers_count") is not None]
+    if len(fcs) >= 2:
+        out += ["", f"從 {rows[0]['date']} 到 {rows[-1]['date']}:追蹤人數 {fcs[0]} → {fcs[-1]}({fcs[-1] - fcs[0]:+d})。"]
+    clicks = defaultdict(int)
+    for r in rows:
+        for m in r.get("clicks_raw", []):
+            for item in m.get("link_total_values", []) or []:
+                clicks[item.get("link_url", "?")] += item.get("value", 0)
+    if clicks:
+        out += ["", "連結點擊(累計,依網址):"]
+        out += [f"- {u}: {v}" for u, v in sorted(clicks.items(), key=lambda kv: -kv[1])[:10]]
+    else:
+        out += ["", "連結點擊:目前沒有紀錄(你的貼文若沒放連結就是 0)。"]
+    return out
+
+
 def main():
     rows = matured_rows()
     lines = [f"# 成效報告 {utcnow_iso()}", "",
@@ -200,6 +237,7 @@ def main():
                      f"{v['likes_per_1k']} | {v['ext_replies_per_1k']} | {v['shares_per_1k']} |")
 
     lines += extra_sections(rows, by_series)
+    lines += account_section()
 
     # ---- 系列配額 ----
     K = len(stats)

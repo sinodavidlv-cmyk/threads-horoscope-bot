@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from store import (POSTS_DIR, _write_json, parse_ts, read_insights,  # noqa: E402
+from store import (DATA, POSTS_DIR, _write_json, parse_ts, read_insights,  # noqa: E402
                    read_posts, threads_len, utcnow_iso, write_insight)
 
 API = "https://graph.threads.net/v1.0"
@@ -22,6 +22,7 @@ METRICS_FULL = "views,likes,replies,reposts,quotes,shares"
 METRICS_SAFE = "views,likes,replies,reposts,quotes"   # shares 文件標示為開發中,失敗就退回
 BUCKETS = (168, 72, 24)                                # 小時,由大到小
 MAX_AGE_DAYS = 21                                      # 超過就不再抓
+ACCOUNT_DIR = DATA / "account"                         # 每天一個檔:追蹤人數與連結點擊
 
 
 def classify(text):
@@ -107,6 +108,32 @@ def backfill(token, user_id, days=100):
     print(f"✅ backfill 新增 {added} 篇")
 
 
+def snapshot_account(token, user_id):
+    """每天記一次帳號層級數字。followers_count 官方沒有歷史查詢,只能自己每天存一筆。
+    clicks(連結點擊,依網址分列)存「昨天(台灣時間)」整天,各天互不重疊,可直接相加。"""
+    tz8 = timezone(timedelta(hours=8))
+    today = datetime.now(tz8).replace(hour=0, minute=0, second=0, microsecond=0)
+    yday = today - timedelta(days=1)
+    row = {"date": today.date().isoformat(), "ts": utcnow_iso(),
+           "clicks_for_date": yday.date().isoformat()}
+    url = f"{API}/{user_id}/threads_insights"
+    r = requests.get(url, params={"metric": "followers_count", "access_token": token}, timeout=30)
+    if r.status_code == 200:
+        for m in r.json().get("data", []):
+            if m.get("name") == "followers_count":
+                row["followers_count"] = (m.get("total_value") or {}).get("value")
+    else:
+        print(f"⚠️ followers_count → {r.status_code} {r.text[:200]}")
+    r = requests.get(url, params={"metric": "clicks", "since": int(yday.timestamp()),
+                                  "until": int(today.timestamp()), "access_token": token}, timeout=30)
+    if r.status_code == 200:
+        row["clicks_raw"] = r.json().get("data", [])
+    else:
+        print(f"⚠️ clicks → {r.status_code} {r.text[:200]}")
+    _write_json(ACCOUNT_DIR / f"{row['date']}.json", row)
+    print(f"✅ 帳號快照 {row['date']}: followers_count={row.get('followers_count')}")
+
+
 def snapshot(token, max_age_days=MAX_AGE_DAYS):
     done = {(i["post_id"], i["bucket"]) for i in read_insights()}
     now = datetime.now(timezone.utc)
@@ -139,3 +166,7 @@ if __name__ == "__main__":
         snapshot(token, max_age_days=None)   # 歷史貼文不限天數,一律補抓
     else:
         snapshot(token)
+    try:
+        snapshot_account(token, os.environ["THREADS_USER_ID"])
+    except Exception as e:   # 帳號快照失敗不該讓整個流程失敗
+        print(f"⚠️ 帳號快照失敗: {e}")
