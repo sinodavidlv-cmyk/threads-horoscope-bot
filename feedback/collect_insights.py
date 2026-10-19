@@ -1,5 +1,6 @@
 """用法:
   python feedback/collect_insights.py backfill   # 一次性:把過去貼文補進 data/posts(系列由標題判斷)
+  python feedback/collect_insights.py reclassify # 不連網:用最新規則重新歸類歷史貼文
   python feedback/collect_insights.py snapshot   # 每天跑:替到期的貼文抓 24h/72h/168h 成效快照
 
 需要的 token 權限:threads_basic + threads_manage_insights(讀文章清單與成效)。
@@ -24,17 +25,38 @@ MAX_AGE_DAYS = 21                                      # 超過就不再抓
 
 
 def classify(text):
-    """從標題把歷史貼文歸到系列。規則依你五支腳本的標題格式。"""
+    """從標題把歷史貼文歸到系列。規則依你實際貼文的標題格式(含舊版格式)。"""
     t = (text or "")[:60]
-    if "十二星座最佳配對" in t:
-        return "main7"
-    if "十二星座運勢" in t:
-        return "main6"
-    if "十二生肖最佳配對" in t:
-        return "main9"
-    if "十二生肖運勢" in t:
-        return "main8"
-    return "other"   # 新聞貼文沒有固定標題,先歸 other;之後可在 main10 加固定前綴再改規則
+    if "英文佳句" in t:
+        return "english"
+    if "新聞" in t:
+        return "news"
+    if "配對" in t:
+        if "生肖" in t:
+            return "main9"
+        if "星座" in t:
+            return "main7"
+    if "12星座運勢" in t:          # 舊版 Main6 標題(阿拉伯數字 12)
+        return "main6_old"
+    if "運勢" in t:
+        if "生肖" in t:
+            return "main8"
+        if "星座" in t:
+            return "main6"
+    return "other"
+
+
+def reclassify():
+    """不呼叫 API:用目前的 classify 規則,重新替歷史貼文歸類。"""
+    n = 0
+    for p in read_posts():
+        if p.get("backfilled"):
+            new = classify(p.get("text"))
+            if new != p["series"]:
+                p["series"] = new
+                _write_json(POSTS_DIR / f"{p['post_id']}.json", p)
+                n += 1
+    print(f"✅ 重新歸類 {n} 篇")
 
 
 def fetch_insights(post_id, token):
@@ -107,8 +129,11 @@ def snapshot(token, max_age_days=MAX_AGE_DAYS):
 
 
 if __name__ == "__main__":
-    token = os.environ["THREADS_ACCESS_TOKEN"]
     mode = sys.argv[1] if len(sys.argv) > 1 else "snapshot"
+    if mode == "reclassify":
+        reclassify()
+        sys.exit(0)
+    token = os.environ["THREADS_ACCESS_TOKEN"]
     if mode == "backfill":
         backfill(token, os.environ["THREADS_USER_ID"])
         snapshot(token, max_age_days=None)   # 歷史貼文不限天數,一律補抓
