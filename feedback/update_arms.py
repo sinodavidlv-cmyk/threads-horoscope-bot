@@ -10,6 +10,7 @@ import json
 import math
 import os
 import random
+import re
 import statistics as st
 import sys
 from collections import defaultdict
@@ -49,6 +50,7 @@ def matured_rows():
         ext = max(0, replies - (1 if p.get("self_reply") in (True, None) else 0))
         rows.append({
             "series": p["series"], "arm": p.get("arm") or {}, "views": views,
+            "ts": p["ts"], "text": p.get("text") or "",
             "likes": i.get("likes", 0), "ext_replies": ext,
             "shares": i.get("reposts", 0) + i.get("quotes", 0),
             "x": math.log1p(views),
@@ -117,6 +119,58 @@ def required_n(sigma, effect=0.30):
     return math.ceil(2 * (1.96 + 0.84) ** 2 / d ** 2)
 
 
+def tw_date(ts):
+    return (parse_ts(ts) + timedelta(hours=8)).date().isoformat()
+
+
+def pct(sorted_v, q):
+    return sorted_v[min(len(sorted_v) - 1, int(q * len(sorted_v)))]
+
+
+def extra_sections(rows, by_series):
+    """診斷用段落:長尾、同日發文數、other 內容抽樣。只出報告,不影響 arms.json。"""
+    out = ["", "## 長尾:誰有爆文", "",
+           "| 系列 | n | 平均瀏覽 | 中位數 | p90 | 最高 | 前10%貼文占該系列瀏覽 |", "|---|---|---|---|---|---|---|"]
+    for s, g in sorted(by_series.items()):
+        v = sorted(r["views"] for r in g)
+        top_n = max(1, len(v) // 10)
+        out.append(f"| {s} | {len(v)} | {st.fmean(v):.0f} | {st.median(v):.0f} | {pct(v, .9)} | {v[-1]} | "
+                   f"{100 * sum(v[-top_n:]) / (sum(v) or 1):.0f}% |")
+
+    # 同日發文數 vs 每篇瀏覽(用所有貼文算每天篇數,只看成熟貼文的瀏覽)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=WINDOW_DAYS)
+    day_cnt = defaultdict(int)
+    for p in read_posts():
+        if parse_ts(p["ts"]) >= cutoff:
+            day_cnt[tw_date(p["ts"])] += 1
+    buckets = defaultdict(list)
+    for r in rows:
+        c = day_cnt[tw_date(r["ts"])]
+        buckets["5+" if c >= 5 else str(c)].append(r["views"])
+    out += ["", "## 同日發文數 vs 每篇瀏覽", "",
+            "(注意:發得多的日子,系列組合也不同,所以這是粗略參考,不是因果證據)", "",
+            "| 當天發幾篇 | 貼文數 | 每篇瀏覽中位數 | 每篇平均 |", "|---|---|---|---|"]
+    for k in sorted(buckets):
+        v = buckets[k]
+        out.append(f"| {k} | {len(v)} | {st.median(v):.0f} | {st.fmean(v):.0f} |")
+
+    # other 是什麼:標題前綴統計 + 抽樣
+    oth = by_series.get("other", [])
+    if oth:
+        def norm(t):
+            return re.sub(r"^\s*\d{1,2}/\d{1,2}\s*(的)?", "", t.strip().replace("\n", " "))[:10]
+        freq = defaultdict(int)
+        for r in oth:
+            freq[norm(r["text"])] += 1
+        out += ["", "## other 的內容(標題前綴出現次數,前 10)", ""]
+        out += [f"- `{k}` × {v}" for k, v in sorted(freq.items(), key=lambda kv: -kv[1])[:10]]
+        rnd = random.Random(5)
+        out += ["", "other 隨機抽樣 12 篇開頭:", ""]
+        out += [f"- {r['text'].strip().splitlines()[0][:40] if r['text'].strip() else '(空)'}  → {r['views']} 瀏覽"
+                for r in rnd.sample(oth, min(12, len(oth)))]
+    return out
+
+
 def main():
     rows = matured_rows()
     lines = [f"# 成效報告 {utcnow_iso()}", "",
@@ -144,6 +198,8 @@ def main():
     for s, v in sorted(stats.items(), key=lambda kv: -kv[1]["median_views"]):
         lines.append(f"| {s} | {v['n']} | {v['median_views']:.0f} | {v['ci90_median_views']} | "
                      f"{v['likes_per_1k']} | {v['ext_replies_per_1k']} | {v['shares_per_1k']} |")
+
+    lines += extra_sections(rows, by_series)
 
     # ---- 系列配額 ----
     K = len(stats)
