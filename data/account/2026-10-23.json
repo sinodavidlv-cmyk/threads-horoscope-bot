@@ -1,0 +1,49 @@
+{
+ "date": "2026-10-23",
+ "ts": "2026-10-22T23:25:18+00:00",
+ "clicks_for_date": "2026-10-22",
+ "followers_count": 233,
+ "clicks_raw": [
+  {
+   "id": "17841469469831924/insights/clicks/day",
+   "name": "clicks",
+   "period": "day",
+   "title": "clicks",
+   "description": "The number of times users clicked on a link",
+   "link_total_values": [
+    {
+     "value": 0,
+     "link_url": "https://coupa.ng/cpVv4z"
+    },
+    {
+     "value": 0,
+     "link_url": "https://s.shopee.tw/7Ad0JTWISK"
+    },
+    {
+     "value": 0,
+     "link_url": "https://s.shopee.tw/2g8Wq6DKc7"
+    },
+    {
+     "value": 0,
+     "link_url": "https://s.shopee.tw/1Ld9Go2FOh"
+    },
+    {
+     "value": 0,
+     "link_url": "https://s.shopee.tw/7VFqhz1pQ9"
+    },
+    {
+     "value": 0,
+     "link_url": "https://s.shopee.tw/5q7cjOXEpd"
+    },
+    {
+     "value": 0,
+     "link_url": "https://timesofindia.indiatimes.com/astrology/horoscope/daily-horoscope-august-10-2026-gemini-moon-brings-smart-exchanges-and-quick-financial-gainsfind-your-zodiac-signs-lucky-number-and-colour-today/articleshow/133068204.cms"
+    },
+    {
+     "value": 0,
+     "link_url": "http://better.but/"
+    }
+   ]
+  }
+ ]
+}
