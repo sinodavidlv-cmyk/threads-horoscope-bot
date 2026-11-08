@@ -1,15 +1,15 @@
 {
- "updated": "2026-11-01T23:38:19+00:00",
- "n_matured": 246,
+ "updated": "2026-11-08T23:45:20+00:00",
+ "n_matured": 210,
  "series_prob": {
-  "main7": 0.151,
-  "main9": 0.649,
+  "main7": 0.15,
+  "main9": 1.0,
   "main8": 0.15,
-  "news": 0.15,
   "other": 0.15,
-  "main6_old": 1.0,
-  "main6": 0.164,
-  "english": 0.15
+  "main6_old": 0.861,
+  "main6": 0.153,
+  "english": 0.15,
+  "news": 0.15
  },
  "dims": {}
 }
