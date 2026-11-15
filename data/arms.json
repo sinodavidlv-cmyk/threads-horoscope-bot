@@ -1,13 +1,13 @@
 {
- "updated": "2026-11-08T23:45:20+00:00",
- "n_matured": 210,
+ "updated": "2026-11-15T23:58:45+00:00",
+ "n_matured": 180,
  "series_prob": {
-  "main7": 0.15,
+  "main7": 0.152,
   "main9": 1.0,
   "main8": 0.15,
   "other": 0.15,
-  "main6_old": 0.861,
-  "main6": 0.153,
+  "main6_old": 0.751,
+  "main6": 0.156,
   "english": 0.15,
   "news": 0.15
  },
